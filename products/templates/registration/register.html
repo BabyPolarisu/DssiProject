@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}สมัครสมาชิก - UniMarket{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-10">
+    <div class="bg-white p-8 rounded-xl shadow-md">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">สร้างบัญชีผู้ใช้ใหม่</h1>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
+                <input type="{{ field.field.widget.input_type }}" 
+                       name="{{ field.name }}" 
+                       id="{{ field.id_for_label }}" 
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                
+                {% if field.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ field.help_text|safe }}</p>
+                {% endif %}
+                
+                {% for error in field.errors %}
+                    <p class="mt-1 text-xs text-red-500">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <div>
+                <button type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    สมัครสมาชิก
+                </button>
+            </div>
+        </form>
+
+        <p class="mt-6 text-center text-sm text-gray-600">
+            มีบัญชีอยู่แล้ว?
+            <a href="{% url 'login' %}" class="font-medium text-blue-600 hover:text-blue-500">
+                เข้าสู่ระบบที่นี่
+            </a>
+        </p>
+    </div>
+</div>
+{% endblock %}

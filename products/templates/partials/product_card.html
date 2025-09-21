@@ -1,0 +1,36 @@
+<a href="{% url 'product_detail' pk=product.pk %}" class="block group">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+        <div class="relative">
+            <img class="aspect-[4/3] w-full object-cover" 
+                 src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/400x300.png/EBF4FF/3B82F6?text=UniMarket{% endif %}" 
+                 alt="{{ product.name }}">
+            <div class="absolute top-0 right-0 p-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {{ product.get_condition_display }}
+                </span>
+            </div>
+        </div>
+        
+        <div class="p-4 flex flex-col flex-grow">
+            <h3 class="text-lg font-bold text-gray-800 truncate group-hover:text-blue-600 transition-colors">
+                {{ product.name }}
+            </h3>
+            
+            <div class="flex-grow">
+                <p class="text-sm text-gray-500 mt-1 line-clamp-2">
+                    {{ product.description|truncatewords:15 }}
+                </p>
+            </div>
+
+            <div class="mt-4">
+                <div class="flex items-center mb-2">
+                    <img class="h-6 w-6 rounded-full object-cover mr-2" src="https://via.placeholder.com/40x40" alt="{{ product.seller.username }}">
+                    <span class="text-xs text-gray-600">{{ product.seller.username }}</span>
+                </div>
+                <p class="text-2xl font-bold text-blue-600">
+                    {{ product.price|floatformat:2 }} บาท
+                </p>
+            </div>
+        </div>
+    </div>
+</a>
