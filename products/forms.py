@@ -1,7 +1,7 @@
 # products/forms.py
 
 from django import forms
-from .models import Product, Category
+from .models import Product, Category ,UserProfile
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
@@ -48,3 +48,8 @@ class ProductForm(forms.ModelForm):
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         fields = UserCreationForm.Meta.fields + ('email',)
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['display_name', 'avatar', 'promptpay_qr', 'bank_name', 'account_number', 'account_name']

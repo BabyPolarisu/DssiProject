@@ -22,13 +22,25 @@
                     </a>
                     
                     <div class="relative" x-data="{ open: false }" @click.away="open = false">
-                        <button @click="open = !open" class="flex items-center space-x-2">
-                            <img class="h-8 w-8 rounded-full object-cover" src="https://via.placeholder.com/80x80" alt="{{ user.username }}">
-                            <span class="text-sm font-medium text-gray-700 hidden sm:block">{{ user.username }}</span>
-                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <button @click="open = !open" class="flex items-center focus:outline-none">    
+                            {% if request.user.profile.avatar %}
+                                <img class="h-8 w-8 rounded-full object-cover border border-gray-200" 
+                                    src="{{ request.user.profile.avatar.url }}" 
+                                    alt="User Avatar">
+                            {% else %}
+                                <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                                    {{ request.user.username|slice:":1"|upper }}
+                                </div>
+                            {% endif %}
+                            
+                            <span class="ml-2 text-sm font-medium text-gray-700 hidden md:block">
+                                {{ request.user.profile.display_name|default:request.user.username }}
+                            </span>
+                            <svg class="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
+
                         <div x-show="open" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">โปรไฟล์ของฉัน</a>
+                            <a href="{% url 'edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">โปรไฟล์ของฉัน</a>
                             <a href="{% url 'my_listings' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">สินค้าของฉัน</a>
                             <div class="border-t my-1"></div>
                             <form method="post" action="{% url 'logout' %}">

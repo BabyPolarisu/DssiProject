@@ -49,23 +49,29 @@
         </div>
 
         {% if products %}
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {% for product in products %}
-                    {% include 'partials/product_card.html' %}
-                {% endfor %}
-            </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        {% for product in products %}
+            {% include 'partials/product_card.html' %}
+        {% endfor %}
+    </div>
         {% else %}
-            <div class="text-center bg-white p-12 rounded-xl shadow-md">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">ไม่พบสินค้า</h3>
-                <p class="mt-1 text-sm text-gray-500">ไม่พบสินค้าในหมวดหมู่นี้ ลองเลือกหมวดหมู่อื่นดูนะ</p>
-                <div class="mt-6">
-                    <a href="{% url 'product_list' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                        กลับไปดูสินค้าทั้งหมด
-                    </a>
+            <div class="text-center py-20">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-gray-400">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
                 </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">ไม่พบสินค้าที่คุณค้นหา</h3>
+                {% if search_query %}
+                    <p class="text-gray-500">ไม่มีสินค้าที่ชื่อใกล้เคียงกับ "<span class="text-blue-600 font-medium">{{ search_query }}</span>"</p>
+                {% else %}
+                    <p class="text-gray-500">ยังไม่มีสินค้าในหมวดหมู่นี้</p>
+                {% endif %}
+                <a href="{% url 'product_list' %}" class="inline-block mt-6 px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition">
+                    ดูสินค้าทั้งหมด
+                </a>
+            </div>
+        {% endif %}
             </div>
         {% endif %}
     </main>

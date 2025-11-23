@@ -27,8 +27,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1',
     'localhost',
-    '.ngrok-free.app',
+    '*.ngrok-free.app',
     'plainly-famous-ray.ngrok-free.app',
+    
 ]
 
 CSRF_TRUSTED_ORIGINS = ['https://plainly-famous-ray.ngrok-free.app']
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'products',
     
 ]
@@ -71,7 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-            ],
+            ],       
         },
     },
 ]
@@ -139,4 +141,4 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

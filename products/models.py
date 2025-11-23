@@ -41,3 +41,17 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    display_name = models.CharField(max_length=100, verbose_name="ชื่อที่แสดง")
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name="รูปโปรไฟล์")
+    
+    # ข้อมูลการชำระเงิน
+    promptpay_qr = models.ImageField(upload_to='payment_qr/', blank=True, null=True, verbose_name="QR Code PromptPay")
+    bank_name = models.CharField(max_length=100, blank=True, verbose_name="ธนาคาร")
+    account_number = models.CharField(max_length=20, blank=True, verbose_name="เลขที่บัญชี")
+    account_name = models.CharField(max_length=100, blank=True, verbose_name="ชื่อบัญชี")
+
+    def __str__(self):
+        return self.user.username

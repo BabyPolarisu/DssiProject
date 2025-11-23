@@ -1,87 +1,130 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
-{% block title %}{% if form.instance.pk %}แก้ไขสินค้า{% else %}ลงขายสิ่งของ{% endif %}{% endblock %}
+{% block title %}{{ product.name }} | UniMarket{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-md">
+<div class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
     
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
+    <nav class="flex text-sm text-gray-500 mb-8">
+        <a href="{% url 'home' %}" class="hover:text-blue-600">หน้าหลัก</a>
+        <span class="mx-2 text-gray-300">/</span>
+        <a href="{% url 'product_list' %}?category={{ product.category.id }}" class="hover:text-blue-600">{{ product.category.name }}</a>
+        <span class="mx-2 text-gray-300">/</span>
+        <span class="text-gray-900 font-medium truncate max-w-xs">{{ product.name }}</span>
+    </nav>
 
-        {% if form.errors %}
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-6" role="alert">
-                <strong class="font-bold">เกิดข้อผิดพลาด!</strong>
-                <span class="block sm:inline">กรุณาตรวจสอบข้อมูลในฟอร์มอีกครั้ง</span>
-                <ul class="list-disc list-inside mt-2">
-                    {% for field, errors in form.errors.items %}
-                        {% for error in errors %}
-                            <li>{{ field.label }}: {{ error }}</li>
-                        {% endfor %}
-                    {% endfor %}
-                </ul>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+        
+        <div class="space-y-4">
+            <div class="aspect-[4/3] w-full bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 relative shadow-sm">
+                 {% if product.image %}
+                    <img src="{{ product.image.url }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+                 {% else %}
+                    <div class="flex items-center justify-center h-full text-gray-400 bg-gray-50">
+                        <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                 {% endif %}
+                 
+                 {% if product.status == 'pending' %}
+                    <div class="absolute top-4 left-4 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-bold shadow-sm border border-yellow-200">
+                        ⚠️ รอการอนุมัติ
+                    </div>
+                 {% endif %}
+            </div>
+        </div>
+
+        <div class="flex flex-col">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 leading-tight">{{ product.name }}</h1>
+            <div class="flex items-center text-gray-500 text-sm mb-6 space-x-4">
+                <span class="flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    {{ product.created_at|timesince }} ที่แล้ว
+                </span>
+            </div>
+
+            <div class="text-4xl font-bold text-blue-600 mb-8">฿{{ product.price|intcomma }}</div>
+
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center justify-between mb-8">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 bg-white rounded-full overflow-hidden border border-gray-200 shadow-sm">
+                        {% if product.seller.profile.avatar %}
+                            <img src="{{ product.seller.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold text-xl">
+                                {{ product.seller.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <p class="text-base font-bold text-gray-900">{{ product.seller.profile.display_name|default:product.seller.username }}</p>
+                        <p class="text-xs text-gray-500">ผู้ขาย</p>
+                    </div>
+                </div>
+                <button class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                </button>
+            </div>
+
+            <div class="prose prose-blue text-gray-600 mb-10">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">รายละเอียดสินค้า</h3>
+                <p class="leading-relaxed whitespace-pre-line">{{ product.description }}</p>
+                
+                <div class="mt-6 grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <span class="text-gray-500 text-sm block">สภาพสินค้า</span>
+                        <span class="font-medium text-gray-900">{{ product.get_condition_display }}</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <span class="text-gray-500 text-sm block">หมวดหมู่</span>
+                        <span class="font-medium text-gray-900">{{ product.category.name }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-auto flex gap-4">
+                {% if request.user == product.seller %}
+                    <a href="{% url 'product_update' product.pk %}" class="flex-1 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition text-center border border-gray-300">
+                        แก้ไขสินค้า
+                    </a>
+                    <a href="{% url 'product_delete' product.pk %}" class="flex-1 py-3 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition text-center border border-red-200">
+                        ลบสินค้า
+                    </a>
+                {% else %}
+                    <button class="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                        ทักแชทผู้ขาย
+                    </button>
+                    <button class="px-6 py-3.5 bg-white text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition border border-gray-300 shadow-sm">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <hr class="border-gray-200 my-12">
+
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <span class="bg-blue-100 text-blue-600 p-2 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+            </span>
+            สินค้าที่คุณอาจสนใจ
+        </h2>
+
+        {% if related_products %}
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {% for product in related_products %}
+                    {% include 'partials/product_card.html' %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-10 text-gray-400">
+                ไม่มีสินค้าที่ใกล้เคียงในขณะนี้
             </div>
         {% endif %}
+    </div>
 
-        <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">{% if form.instance.pk %}แก้ไขข้อมูลสินค้า{% else %}ลงขายสิ่งของ{% endif %}</h1>
-            <p class="text-gray-500">กรอกข้อมูลสินค้าที่ต้องการขายให้ครบถ้วน</p>
-        </div>
-
-        <div class="mb-6">
-            <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">รูปภาพสินค้า</label>
-            {{ form.image }}
-            {% if form.instance.image %}
-                <p class="mt-2 text-xs text-gray-500">ไฟล์ปัจจุบัน: <a href="{{ form.instance.image.url }}" target="_blank" class="text-blue-600">{{ form.instance.image.name }}</a></p>
-            {% endif %}
-            {{ form.image.errors }}
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-                {{ form.name.label_tag }}
-                {{ form.name }}
-                {{ form.name.errors }}
-            </div>
-            <div>
-                {{ form.category.label_tag }}
-                {{ form.category }}
-                {{ form.category.errors }}
-            </div>
-        </div>
-        
-        <div class="mb-6">
-            {{ form.condition.label_tag }}
-            <div class="mt-2 flex space-x-8">
-                 {% for radio in form.condition %}
-                 <div class="flex items-center">
-                    {{ radio.tag }}
-                    <label for="{{ radio.id_for_label }}" class="ml-3 block text-sm font-medium text-gray-700">{{ radio.choice_label }}</label>
-                 </div>
-                 {% endfor %}
-                 {{ form.condition.errors }}
-            </div>
-        </div>
-
-        <div class="mb-6">
-             {{ form.price.label_tag }}
-             <div class="mt-1 relative rounded-md shadow-sm">
-                {{ form.price }}
-                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">บาท</span></div>
-            </div>
-            {{ form.price.errors }}
-        </div>
-
-        <div class="mb-8">
-             {{ form.description.label_tag }}
-             {{ form.description }}
-             {{ form.description.errors }}
-        </div>
-        
-        <div class="flex justify-end space-x-4 border-t pt-5">
-            <a href="{% url 'home' %}" class="bg-white py-2 px-6 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">ยกเลิก</a>
-            <button type="submit" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                {% if form.instance.pk %}บันทึกการเปลี่ยนแปลง{% else %}บันทึกและส่งเพื่ออนุมัติ{% endif %}
-            </button>
-        </div>
-    </form> </div>
+</div>
 {% endblock %}

@@ -11,5 +11,8 @@ urlpatterns = [
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
     path('product/<int:pk>/edit/', views.product_update, name='product_update'),
     path('product/<int:pk>/delete/', views.product_delete, name='product_delete'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('product/success/', views.product_success, name='product_success'),
+    path('api/search-suggestions/', views.search_suggestions, name='search_suggestions'),
     
 ]

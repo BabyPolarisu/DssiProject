@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4">
+    
+    <div class="text-sm text-gray-500 mb-4">
+        <span>แดชบอร์ด</span> <span class="mx-2"> </span> <span class="text-gray-800 font-medium">แก้ไขโปรไฟล์</span>
+    </div>
+
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">แก้ไขข้อมูลโปรไฟล์</h1>
+        <p class="text-gray-600 mt-1">อัปเดตข้อมูลส่วนตัวและการตั้งค่าการรับชำระเงิน</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <form method="POST" enctype="multipart/form-data" class="p-8">
+            {% csrf_token %}
+
+            <div class="mb-10">
+                <h2 class="text-lg font-semibold text-gray-900 mb-6">ข้อมูลพื้นฐาน</h2>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">รูปโปรไฟล์</label>
+                    <div class="flex items-center gap-6">
+                        <div class="relative">
+                            {% if form.instance.avatar %}
+                                <img src="{{ form.instance.avatar.url }}" class="w-20 h-20 rounded-full object-cover border border-gray-200">
+                            {% else %}
+                                <div class="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                                    <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                                </div>
+                            {% endif %}
+                            <div class="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full border-2 border-white cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                                </svg>
+                            </div>
+                            <input type="file" name="avatar" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        </div>
+                        <div>
+                            <button type="button" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition">เปลี่ยนรูป</button>
+                            <p class="text-xs text-gray-500 mt-1">JPG, PNG ขนาดไม่เกิน 5MB</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุลผู้ใช้</label> <label class="text-sm text-gray-500">(ต้องตรงกับชื่อในบัญชีธนาคาร)</label>
+                    <input type="text" name="display_name" value="{{ form.instance.display_name }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="ระบุชื่อของคุณ">
+                </div>
+            </div>
+
+            <hr class="border-gray-100 my-8">
+
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 mb-2">ข้อมูลสำหรับรับชำระเงิน</h2>
+                <p class="text-sm text-gray-500 mb-6">กรุณาเพิ่มข้อมูลการรับชำระเงินเพื่อให้ลูกค้าสามารถชำระเงินได้</p>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">QR Code PromptPay</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-gray-50 transition relative">
+                        
+                        {% if form.instance.promptpay_qr %}
+                            <img src="{{ form.instance.promptpay_qr.url }}" class="h-32 mx-auto mb-2 object-contain">
+                             <p class="text-sm text-green-600">✓ อัปโหลดแล้ว</p>
+                        {% else %}
+                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
+                                </svg>
+                            </div>
+                            <p class="text-sm font-medium text-gray-900">อัปโหลด QR Code PromptPay</p>
+                            <p class="text-xs text-gray-500 mt-1">PNG, JPG ขนาดไม่เกิน 2MB</p>
+                        {% endif %}
+                        
+                        <div class="mt-4">
+                            <span class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 shadow-sm cursor-pointer inline-block">เลือกไฟล์</span>
+                        </div>
+                        
+                        <input type="file" name="promptpay_qr" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ธนาคาร</label>
+                        <select name="bank_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">เลือกธนาคาร</option>
+                            <option value="KBANK" {% if form.instance.bank_name == 'KBANK' %}selected{% endif %}>กสิกรไทย</option>
+                            <option value="SCB" {% if form.instance.bank_name == 'SCB' %}selected{% endif %}>ไทยพาณิชย์</option>
+                            <option value="KTB" {% if form.instance.bank_name == 'KTB' %}selected{% endif %}>กรุงไทย</option>
+                            <option value="BBL" {% if form.instance.bank_name == 'BBL' %}selected{% endif %}>กรุงเทพ</option>
+                            <option value="TTB" {% if form.instance.bank_name == 'TTB' %}selected{% endif %}>ทีทีบี</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">เลขที่บัญชี</label>
+                        <input type="text" name="account_number" value="{{ form.instance.account_number }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="XXX-X-XXXXX-X">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อบัญชี</label>
+                        <input type="text" name="account_name" value="{{ form.instance.account_name }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="ชื่อเจ้าของบัญชี">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
+                <a href="{% url 'home' %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">ยกเลิก</a>
+                <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 shadow-sm transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    บันทึกการเปลี่ยนแปลง
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endblock %}
