@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
 from django.contrib.auth import login 
 from django.contrib import admin
 from django.contrib import messages
@@ -172,3 +173,80 @@ def search_suggestions(request):
         products = Product.objects.filter(name__icontains=query, status='active')[:5]
         results = [{'id': p.id, 'name': p.name} for p in products]
     return JsonResponse(results, safe=False)
+
+def is_superuser(user):
+    return user.is_superuser
+
+# 1. หน้า Dashboard รวม
+@login_required
+@user_passes_test(is_superuser) # ล็อคให้เข้าได้แค่แอดมิน
+def admin_dashboard(request):
+    # ดึงสินค้าที่รออนุมัติ
+    pending_products = Product.objects.filter(status='pending').order_by('-created_at')
+    active_products = Product.objects.filter(status='active').order_by('-created_at')
+    suspended_products = Product.objects.filter(status='suspended').order_by('-updated_at')
+    
+    # ดึงสถิติต่างๆ
+    total_products = Product.objects.count()
+    total_users = User.objects.count()
+    pending_count = pending_products.count()
+    
+    context = {
+        'pending_products': pending_products,
+        'active_products': active_products,
+        'total_products': total_products,
+        'total_users': total_users,
+        'pending_count': pending_count,
+        'suspended_products': suspended_products,
+    }
+    return render(request, 'admin_dashboard.html', context)
+
+# 2. ฟังก์ชันกดอนุมัติสินค้า
+@login_required
+@user_passes_test(is_superuser)
+def approve_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    product.status = 'active' # เปลี่ยนสถานะเป็นพร้อมขาย
+    product.save()
+    messages.success(request, f'อนุมัติสินค้า "{product.name}" เรียบร้อยแล้ว')
+    return redirect('admin_dashboard')
+
+# 3. ฟังก์ชันกดปฏิเสธ/ลบสินค้า
+@login_required
+@user_passes_test(is_superuser)
+def suspend_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    product.status = 'suspended' # เปลี่ยนสถานะเป็นระงับ
+    product.save()
+    messages.warning(request, f'ระงับสินค้า "{product.name}" ชั่วคราวแล้ว')
+    return redirect('admin_dashboard')
+
+# เพิ่มฟังก์ชันลบสินค้า (สำหรับแอดมินลบสินค้า Active)
+@login_required
+@user_passes_test(is_superuser)
+def delete_product_admin(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    product_name = product.name
+    product.delete()
+    messages.error(request, f'ลบสินค้า "{product_name}" ออกจากระบบแล้ว')
+    return redirect('admin_dashboard')
+
+@login_required
+@user_passes_test(is_superuser)
+def reject_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    # เก็บชื่อสินค้าไว้แจ้งเตือนก่อนลบ
+    product_name = product.name
+    # ลบสินค้า
+    product.delete()
+    messages.error(request, f'ปฏิเสธและลบสินค้า "{product_name}" เรียบร้อยแล้ว')
+    return redirect('admin_dashboard')
+
+@login_required
+def restore_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if request.user.is_superuser: # เช็คว่าเป็น Admin
+        product.status = 'active'
+        product.save()
+        messages.success(request, f'คืนสถานะสินค้า "{product.name}" เรียบร้อยแล้ว')
+    return redirect('admin_dashboard')

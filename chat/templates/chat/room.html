@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto my-10 bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-[600px]">
+    
+    <div class="bg-blue-600 p-4 flex items-center justify-between text-white">
+        <div>
+            <h2 class="font-bold text-lg">
+                {% if request.user == room.buyer %}
+                    แชทกับผู้ขาย: {{ room.seller.username }}
+                {% else %}
+                    แชทกับผู้ซื้อ: {{ room.buyer.username }}
+                {% endif %}
+            </h2>
+            <p class="text-sm text-blue-100">สนใจสินค้า: {{ room.product.name }}</p>
+        </div>
+        <a href="{% url 'product_detail' room.product.id %}" class="text-sm bg-blue-500 hover:bg-blue-400 px-3 py-1 rounded">กลับไปดูสินค้า</a>
+    </div>
+
+    <div id="chat-log" class="flex-1 p-4 overflow-y-auto bg-gray-50 space-y-4">
+        {% for message in messages %}
+            <div class="flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
+                <div class="max-w-[70%] px-4 py-2 rounded-lg {% if message.sender == request.user %}bg-blue-500 text-white{% else %}bg-gray-200 text-gray-800{% endif %}">
+                    {{ message.content }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="p-4 bg-white border-t border-gray-200">
+        <div class="flex gap-2">
+            <input id="chat-message-input" type="text" class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="พิมพ์ข้อความ...">
+            <button id="chat-message-submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-bold">ส่ง</button>
+        </div>
+        <div class="mt-2 flex gap-2 overflow-x-auto pb-2">
+            <button onclick="sendQuickMessage('📍 สะดวกนัดรับที่โรงอาหารกลาง')" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border">📍 โรงอาหารกลาง</button>
+            <button onclick="sendQuickMessage('📍 สะดวกนัดรับหน้าตึกคณะ')" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border">📍 หน้าตึกคณะ</button>
+            <button onclick="sendQuickMessage('📦 สินค้านี้ยังอยู่ไหมครับ?')" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border">📦 สินค้าอยู่ไหม?</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const roomId = {{ room.id }};
+    const userId = {{ request.user.id }};
+
+    const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+    
+    // เชื่อมต่อ WebSocket
+    const chatSocket = new WebSocket(
+        ws_scheme + '://' + window.location.host + '/ws/chat/' + roomId + '/'
+    );
+
+    // เมื่อมีข้อความเข้ามา
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const chatLog = document.querySelector('#chat-log');
+        
+        // สร้าง HTML ของข้อความใหม่
+        const isMe = data.sender_id === userId;
+        const msgHtml = `
+            <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
+                <div class="max-w-[70%] px-4 py-2 rounded-lg ${isMe ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}">
+                    ${data.message}
+                </div>
+            </div>
+        `;
+        
+        chatLog.insertAdjacentHTML('beforeend', msgHtml);
+        chatLog.scrollTop = chatLog.scrollHeight; // เลื่อนลงล่างสุด
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    // การส่งข้อความ
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function(e) {
+        if (e.keyCode === 13) {  // enter key
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    document.querySelector('#chat-message-submit').onclick = function(e) {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom.value;
+        
+        if(message.trim() !== "") {
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'sender_id': userId
+            }));
+            messageInputDom.value = '';
+        }
+    };
+
+    // ฟังก์ชันสำหรับปุ่มนัดรับ
+    function sendQuickMessage(msg) {
+        chatSocket.send(JSON.stringify({
+            'message': msg,
+            'sender_id': userId
+        }));
+    }
+</script>
+{% endblock %}

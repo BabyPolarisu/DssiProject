@@ -23,24 +23,31 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">รูปโปรไฟล์</label>
                     <div class="flex items-center gap-6">
                         <div class="relative">
-                            {% if form.instance.avatar %}
-                                <img src="{{ form.instance.avatar.url }}" class="w-20 h-20 rounded-full object-cover border border-gray-200">
-                            {% else %}
-                                <div class="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-                                    <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                                </div>
-                            {% endif %}
-                            <div class="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full border-2 border-white cursor-pointer">
+                            
+                            <img id="avatar-preview" 
+                                src="{% if form.instance.avatar %}{{ form.instance.avatar.url }}{% endif %}" 
+                                class="w-20 h-20 rounded-full object-cover border border-gray-200 {% if not form.instance.avatar %}hidden{% endif %}">
+
+                            <div id="avatar-placeholder" 
+                                class="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 {% if form.instance.avatar %}hidden{% endif %}">
+                                <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                            </div>
+
+                            <div class="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full border-2 border-white cursor-pointer pointer-events-none">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
                                 </svg>
                             </div>
-                            <input type="file" name="avatar" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                        </div>
-                        <div>
+
+                            <input type="file" 
+                                name="avatar" 
+                                accept="image/*" 
+                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                onchange="previewImage(event, 'avatar-preview', 'avatar-placeholder')">
+                            
                             <button type="button" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition">เปลี่ยนรูป</button>
-                            <p class="text-xs text-gray-500 mt-1">JPG, PNG ขนาดไม่เกิน 5MB</p>
+                            <p class="text-xs text-gray-500 mt-1">JPEG, PNG ขนาดไม่เกิน 5MB</p>
                         </div>
                     </div>
                 </div>
@@ -119,4 +126,21 @@
         </form>
     </div>
 </div>
+<script>
+    function previewImage(event, imageId, placeholderId) {
+        const input = event.target;
+        const preview = document.getElementById(imageId);
+        const placeholder = document.getElementById(placeholderId);
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden'); // โชว์รูป
+                if (placeholder) placeholder.classList.add('hidden'); // ซ่อนกล่องเทา
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
 {% endblock %}

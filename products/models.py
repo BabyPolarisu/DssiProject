@@ -1,11 +1,10 @@
-# products/models.py
-
 from django.db import models
 from django.contrib.auth.models import User
 
 class Category(models.Model):
     name = models.CharField(max_length=100, verbose_name="ชื่อหมวดหมู่")
-    
+    icon = models.CharField(max_length=10, default="📦", verbose_name="ไอคอน/Emoji")
+
     class Meta:
         verbose_name_plural = "Categories"
 
@@ -13,9 +12,20 @@ class Category(models.Model):
         return self.name
 
 # --- โค้ดสำหรับ Choices (เก็บไว้เผื่อใช้กับฟิลด์อื่น) ---
+CATEGORY_CHOICES = (
+    ('books', '📚 หนังสือเรียน'),
+    ('electronics', '💻 อิเล็กทรอนิกส์'),
+    ('clothing', '👕 เครื่องแต่งกาย'),
+    ('shoes', '👟 รองเท้า'),
+    ('accessories', '💍 เครื่องประดับ'),
+    ('dorm', '🛋️ ของใช้ในหอ'),
+    ('stationary', '📝 อุปกรณ์การเรียน'),
+    ('sports', '💪🏻 อุปกรณ์ออกกำลังกาย'),
+)
+
 CONDITION_CHOICES = (
-    ('new', 'ของใหม่'),
-    ('used', 'มือสอง'),
+    ('new', '✨ มือหนึ่ง (New)'),
+    ('used', '📦 มือสอง (Used)'),
 )
 
 STATUS_CHOICES = (
@@ -33,7 +43,7 @@ class Product(models.Model):
     description = models.TextField(verbose_name="รายละเอียด")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="ราคา")
     condition = models.CharField(max_length=10, choices=CONDITION_CHOICES, default='used', verbose_name="สภาพสินค้า")
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL,null=True, blank=True, verbose_name="หมวดหมู่") 
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="หมวดหมู่")
     seller = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="ผู้ขาย")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะ")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -55,3 +65,4 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+    

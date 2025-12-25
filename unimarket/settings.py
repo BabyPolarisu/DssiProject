@@ -38,6 +38,7 @@ CSRF_TRUSTED_ORIGINS = ['https://plainly-famous-ray.ngrok-free.app']
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,7 +46,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'products',
+    'channels',
+    'chat',
     
 ]
 
@@ -57,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'unimarket.urls'
@@ -66,7 +74,7 @@ import os
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -79,7 +87,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'unimarket.wsgi.application'
+ASGI_APPLICATION = 'unimarket.asgi.application'
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -126,6 +140,9 @@ USE_I18N = True
 
 USE_TZ = True
 
+SITE=ID = 1
+
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -137,8 +154,40 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTHENTICATION_BACKENDS = [
+    'allauth.account.auth_backends.AuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend', # เพื่อให้ Admin ยัง Login แบบเดิมได้
+     # เพื่อให้ Login ผ่าน Social ได้
+]
+
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# ปิดหน้า Intermediate Page (หน้า Continue)
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+# ปิดหน้า Signup Form (ถ้าข้อมูลครบ ให้ข้ามหน้ากรอกข้อมูลเพิ่มไปเลย)
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+# # (Optional) ตั้งค่าเพิ่มเติมของ Allauth
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_USERNAME_REQUIRED = False # ให้ใช้ Email เป็นหลักได้
+# ACCOUNT_AUTHENTICATION_METHOD = 'email'
+# ACCOUNT_EMAIL_VERIFICATION = 'optional' # หรือ 'mandatory' ถ้าบังคับยืนยันอีเมล
+
+# # (Optional) ตั้งค่า Google Provider (ถ้าต้องการจำกัดโดเมนมหาวิทยาลัย)
+# SOCIALACCOUNT_PROVIDERS = {
+#     'google': {
+#         'SCOPE': [
+#             'profile',
+#             'email',
+#         ],
+#         'AUTH_PARAMS': {
+#             'access_type': 'online',
+#         }
+#     }
+# }
+

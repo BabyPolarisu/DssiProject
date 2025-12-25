@@ -5,10 +5,7 @@
 
 {% block content %}
 <div class="relative w-full rounded-xl bg-[#008CBA] py-20 px-6 text-center">
-
-  <div 
-    class="absolute inset-0 bg-[url('https://triamwit.ac.th/wp-content/uploads/2020/12/iStock-1210745478-conflicted-scaled-1.jpg')] bg-cover bg-center opacity-10 mix-blend-overlay pointer-events-none">
-  </div>
+  <div class="absolute inset-0 bg-[url('https://triamwit.ac.th/wp-content/uploads/2020/12/iStock-1210745478-conflicted-scaled-1.jpg')] bg-cover bg-center opacity-10 mix-blend-overlay pointer-events-none"></div>
   
   <div class="relative z-10">
     <h1 class="text-4xl font-bold text-white mb-2">UniMarket</h1>
@@ -16,141 +13,115 @@
     <p class="text-white/90 mb-8">ค้นหาหนังสือ, อุปกรณ์การเรียน, และของใช้มือสองคุณภาพดีจากเพื่อนๆ และรุ่นพี่</p>
 
     <form action="{% url 'product_list' %}" method="GET" class="relative w-full max-w-xl mx-auto">
-    <div class="bg-white rounded-full flex items-center p-1 shadow-sm relative z-50">
-        <input type="text" 
-               name="q" 
-               id="search-input"
-               placeholder="ค้นหาสินค้าที่นี่..." 
-               class="flex-1 px-6 py-2 outline-none text-gray-700 rounded-full"
-               autocomplete="off"
-               onkeyup="fetchSuggestions(this.value)">
-        
-        <button type="submit" class="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-        </button>
-    </div>
-
-    <div id="suggestions-box" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 z-40">
+        <div class="bg-white rounded-full flex items-center p-1 shadow-sm relative z-50">
+            <input type="text" name="q" id="search-input" placeholder="ค้นหาสินค้าที่นี่..." class="flex-1 px-6 py-2 outline-none text-gray-700 rounded-full" autocomplete="off" onkeyup="fetchSuggestions(this.value)">
+            <button type="submit" class="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+            </button>
         </div>
+        <div id="suggestions-box" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 z-40 text-left overflow-hidden"></div>
+    </form>
 
-</form>
-
-<script>
-    function fetchSuggestions(query) {
-        const box = document.getElementById('suggestions-box');
-        
-        // ถ้าพิมพ์น้อยกว่า 2 ตัวอักษร ให้ซ่อนกล่อง
-        if (query.length < 1) {
-            box.classList.add('hidden');
-            box.innerHTML = '';
-            return;
+    <script>
+        function fetchSuggestions(query) {
+            const box = document.getElementById('suggestions-box');
+            if (query.length < 1) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+            fetch(`/api/search-suggestions/?term=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        box.innerHTML = ''; box.classList.remove('hidden');
+                        data.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'px-6 py-3 hover:bg-gray-50 cursor-pointer text-gray-700 border-b border-gray-50 last:border-none';
+                            div.textContent = item.name;
+                            div.onclick = function() {
+                                document.getElementById('search-input').value = item.name;
+                                box.classList.add('hidden');
+                                window.location.href = `{% url 'product_list' %}?q=${item.name}`;
+                            };
+                            box.appendChild(div);
+                        });
+                    } else { box.classList.add('hidden'); }
+                });
         }
-
-        // เรียก API ที่เราสร้างไว้ในข้อ 1
-        fetch(`/api/search-suggestions/?term=${query}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.length > 0) {
-                    box.innerHTML = ''; // ล้างข้อมูลเก่า
-                    box.classList.remove('hidden'); // โชว์กล่อง
-
-                    // วนลูปสร้างรายการแนะนำ
-                    data.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'px-6 py-3 hover:bg-gray-50 cursor-pointer text-gray-700 border-b border-gray-50 last:border-none';
-                        div.textContent = item.name;
-                        
-                        // เมื่อคลิกที่คำแนะนำ
-                        div.onclick = function() {
-                            document.getElementById('search-input').value = item.name; // ใส่ค่าในช่อง
-                            box.classList.add('hidden'); // ซ่อนกล่อง
-                            window.location.href = `{% url 'product_list' %}?q=${item.name}`; // ไปหน้าค้นหาเลย
-                        };
-                        box.appendChild(div);
-                    });
-                } else {
-                    box.classList.add('hidden');
-                }
-            });
-    }
-
-    document.addEventListener('click', function(e) {
-        const box = document.getElementById('suggestions-box');
-        const input = document.getElementById('search-input');
-        if (!input.contains(e.target) && !box.contains(e.target)) {
-            box.classList.add('hidden');
-        }
-    });
-</script>
+        document.addEventListener('click', function(e) {
+            const box = document.getElementById('suggestions-box');
+            const input = document.getElementById('search-input');
+            if (!input.contains(e.target) && !box.contains(e.target)) { box.classList.add('hidden'); }
+        });
+    </script>
   </div>
 </div>
 
 <div class="mb-12 mt-10 space-y-8">
     <h2 class="text-2xl font-bold text-gray-800 mb-4">ค้นหาตามหมวดหมู่</h2>
     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 text-center">
-        <a href="#" class="group">
-            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
+        <a href="{% url 'product_list' %}?category=1" class="group">
+            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-blue-100">
+                <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                     <span class="text-3xl">📚</span>
                 </div>
                 <p class="text-sm font-medium text-gray-700 group-hover:text-blue-600">หนังสือเรียน</p>
             </div>
         </a>
-        <a href="#" class="group">
-            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div class="bg-indigo-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
+        <a href="{% url 'product_list' %}?category=2" class="group">
+            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-indigo-100">
+                <div class="bg-indigo-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                     <span class="text-3xl">💻</span>
                 </div>
                 <p class="text-sm font-medium text-gray-700 group-hover:text-indigo-600">อิเล็กทรอนิกส์</p>
             </div>
         </a>
-        <a href="#" class="group">
-            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div class="bg-pink-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
+        <a href="{% url 'product_list' %}?category=3" class="group">
+            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-pink-100">
+                <div class="bg-pink-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                     <span class="text-3xl">👕</span>
                 </div>
                 <p class="text-sm font-medium text-gray-700 group-hover:text-pink-600">เครื่องแต่งกาย</p>
             </div>
         </a>
-        <a href="#" class="group">
-            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
+        <a href="{% url 'product_list' %}?category=4" class="group">
+            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-green-100">
+                <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                     <span class="text-3xl">👟</span>
                 </div>
                 <p class="text-sm font-medium text-gray-700 group-hover:text-green-600">รองเท้า</p>
             </div>
-        <a href="#" class="group">
-            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div class="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
+        </a>
+        <a href="{% url 'product_list' %}?category=5" class="group">
+            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-purple-100">
+                <div class="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                     <span class="text-3xl">💍</span>
                 </div>
-                <p class="text-sm font-medium text-gray-700 group-hover:text-green-600">เครื่องประดับ</p>
-            </div>
-        <a href="#" class="group">
-            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div class="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
-                    <span class="text-3xl">🛋️</span>
-                </div>
-                <p class="text-sm font-medium text-gray-700 group-hover:text-green-600">ของใช้ในหอ</p>
-            </div>
-        <a href="#" class="group">
-            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
-                    <span class="text-3xl">📝</span>
-                </div>
-                <p class="text-sm font-medium text-gray-700 group-hover:text-green-600">อุปกรณ์การเรียน</p>
-            </div>
-        <a href="#" class="group">
-            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <div class="bg-cyan-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
-                    <span class="text-3xl">💪🏻</span>
-                </div>
-                <p class="text-sm font-medium text-gray-700 group-hover:text-green-600">อุปกรณ์ออกกำลังกาย</p>
+                <p class="text-sm font-medium text-gray-700 group-hover:text-purple-600">เครื่องประดับ</p>
             </div>
         </a>
-        </div>
+        <a href="{% url 'product_list' %}?category=6" class="group">
+            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-red-100">
+                <div class="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                    <span class="text-3xl">🛋️</span>
+                </div>
+                <p class="text-sm font-medium text-gray-700 group-hover:text-red-600">ของใช้ในหอ</p>
+            </div>
+        </a>
+        <a href="{% url 'product_list' %}?category=7" class="group">
+            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-blue-100">
+                <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                    <span class="text-3xl">📝</span>
+                </div>
+                <p class="text-sm font-medium text-gray-700 group-hover:text-blue-600">อุปกรณ์การเรียน</p>
+            </div>
+        </a>
+        <a href="{% url 'product_list' %}?category=8" class="group">
+            <div class="p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-cyan-100">
+                <div class="bg-cyan-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                    <span class="text-3xl">💪🏻</span>
+                </div>
+                <p class="text-sm font-medium text-gray-700 group-hover:text-cyan-600">อุปกรณ์กีฬา</p>
+            </div>
+        </a>
+    </div>
 </div>
 
 <div>
