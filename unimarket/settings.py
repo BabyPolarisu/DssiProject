@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,19 +21,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+jur+3)+a^mti88lbz8a_s9s!rhzn8(^!pr3srfkz$0rhih_*w'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-+jur+3)+a^mti88lbz8a_s9s!rhzn8(^!pr3srfkz$0rhih_*w')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = int(os.environ.get("DEBUG", 0))
 
-ALLOWED_HOSTS = ['127.0.0.1',
-    'localhost',
-    '*.ngrok-free.app',
-    'plainly-famous-ray.ngrok-free.app',
-    
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'plainly-famous-ray.ngrok-free.app']
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost',
+    'http://127.0.0.1',
+    'https://plainly-famous-ray.ngrok-free.app'
 ]
-
-CSRF_TRUSTED_ORIGINS = ['https://plainly-famous-ray.ngrok-free.app']
 
 
 # Application definition
@@ -45,11 +45,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    #Third party apps
     'django.contrib.humanize',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    #apps
     'products',
     'channels',
     'chat',
@@ -61,16 +64,14 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'unimarket.urls'
 
-
-import os
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -89,25 +90,27 @@ TEMPLATES = [
 WSGI_APPLICATION = 'unimarket.wsgi.application'
 ASGI_APPLICATION = 'unimarket.asgi.application'
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
-
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'unimarket_db', 
-        'USER': 'postgres', 
-        'PASSWORD': '25201606', 
-        'HOST': 'localhost',
-        'PORT': '5432',
+if os.environ.get("DATABASE_URL") == "postgres":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get("SQL_DATABASE", "unimarket_db"),
+            'USER': os.environ.get("SQL_USER", "unimarket_user"),
+            'PASSWORD': os.environ.get("SQL_PASSWORD", "password"),
+            'HOST': os.environ.get("SQL_HOST", "db"),
+            'PORT': '5432',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -133,21 +136,17 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-SITE=ID = 1
-
-
+SITE_ID = 1
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -172,6 +171,34 @@ SOCIALACCOUNT_LOGIN_ON_GET = True
 # ปิดหน้า Signup Form (ถ้าข้อมูลครบ ให้ข้ามหน้ากรอกข้อมูลเพิ่มไปเลย)
 SOCIALACCOUNT_AUTO_SIGNUP = True
 
+# =========================================================
+# 7. Channels (Redis for Production / InMemory for Dev)
+# =========================================================
+
+# ถ้าอยู่ใน Production (มี Redis) ให้ใช้ Redis
+
+if os.environ.get("REDIS_HOST"):
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [(os.environ.get("REDIS_HOST"), 6379)],
+            },
+        },
+    }
+else:
+    # ถ้า Local ใช้แบบ InMemory (Dev Only)
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # # (Optional) ตั้งค่าเพิ่มเติมของ Allauth
 # ACCOUNT_EMAIL_REQUIRED = True
 # ACCOUNT_USERNAME_REQUIRED = False # ให้ใช้ Email เป็นหลักได้
@@ -179,15 +206,16 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 # ACCOUNT_EMAIL_VERIFICATION = 'optional' # หรือ 'mandatory' ถ้าบังคับยืนยันอีเมล
 
 # # (Optional) ตั้งค่า Google Provider (ถ้าต้องการจำกัดโดเมนมหาวิทยาลัย)
-# SOCIALACCOUNT_PROVIDERS = {
-#     'google': {
-#         'SCOPE': [
-#             'profile',
-#             'email',
-#         ],
-#         'AUTH_PARAMS': {
-#             'access_type': 'online',
-#         }
-#     }
-# }
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+            'hd': 'ubu.ac.th',
+        }
+    }
+}
 

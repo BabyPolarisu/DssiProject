@@ -1,3 +1,0 @@
-Client.ID 644713544684-k8424sj2cvj624htth0fuu0m9o4qnjhj.apps.googleusercontent.com
-
-Secret Key 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
