@@ -1,7 +1,7 @@
 # products/forms.py
 
 from django import forms
-from .models import Product, Category ,UserProfile
+from .models import Product, Category, UserProfile, Review
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
@@ -52,4 +52,20 @@ class CustomUserCreationForm(UserCreationForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['display_name', 'avatar', 'promptpay_qr', 'bank_name', 'account_number', 'account_name']
+        # ✅ เพิ่ม 'display_name' เข้าไปในรายการ fields
+        fields = ['display_name', 'phone_number', 'address', 'bio', 'avatar']
+        
+        widgets = {
+            'bio': forms.Textarea(attrs={'rows': 3}),
+            # เพิ่ม widget ให้ display_name ดูสวยงาม (ถ้าต้องการ)
+            'display_name': forms.TextInput(attrs={'class': 'w-full border rounded px-3 py-2', 'placeholder': 'ชื่อที่ใช้แสดงในร้าน'}),
+        }
+
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.Select(attrs={'class': 'w-full border rounded-lg px-3 py-2'}),
+            'comment': forms.Textarea(attrs={'class': 'w-full border rounded-lg px-3 py-2', 'rows': 3, 'placeholder': 'เขียนรีวิวให้ผู้ขายคนนี้...'}),
+        }

@@ -5,10 +5,10 @@ from django.contrib.auth import login
 from django.contrib import admin
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Q
-from .forms import ProductForm, CustomUserCreationForm, ProfileForm 
-from .models import Product, Category, UserProfile
-from .utils import verify_promptpay_qr
+from django.db.models import Avg
+from .forms import ProductForm, CustomUserCreationForm, ProfileForm, ReviewForm 
+from .models import Product, Category, UserProfile, Review
+# from .utils import verify_promptpay_qr
 
 def home(request):
     latest_products = Product.objects.filter(status='active').order_by('-created_at')[:8]
@@ -20,7 +20,14 @@ def home(request):
 def product_list_all(request):
     products = Product.objects.filter(status='active').order_by('-created_at')
     categories = Category.objects.all()
-
+    # 1. รับค่าคำค้นหาจากกล่อง Search (name="q")
+    query = request.GET.get('q')
+    
+    # 2. ถ้ามีคำค้นหา ให้กรองสินค้าตาม "ชื่อ" หรือ "คำอธิบาย"
+    if query:
+        products = products.filter(
+            Q(name__icontains=query) | Q(description__icontains=query)
+        )
     selected_category_id = request.GET.get('category')
     if selected_category_id:
         products = products.filter(category_id=selected_category_id)
@@ -28,7 +35,8 @@ def product_list_all(request):
     context = {
         'products': products,
         'categories': categories,
-        'selected_category_id': int(selected_category_id) if selected_category_id else None
+        'selected_category_id': int(selected_category_id) if selected_category_id else None,
+        'search_query': query, # (Optional) ส่งค่ากลับไปเผื่ออยากแสดงในช่อง input เดิม
     }
     return render(request, 'products/product_list.html', context)
 
@@ -68,35 +76,75 @@ def product_detail(request, pk):
     }
     return render(request, 'products/product_detail.html', context)
 
+def seller_profile(request, seller_id):
+    seller = get_object_or_404(User, pk=seller_id)
+    products = Product.objects.filter(seller=seller, status='active')
+    reviews = Review.objects.filter(seller=seller).order_by('-created_at')
+
+    # ✅ เพิ่มส่วนคำนวณคะแนนเฉลี่ย
+    avg_rating = reviews.aggregate(Avg('rating'))['rating__avg']
+
+    # ถ้าไม่มีรีวิวเลย ให้เป็น 0
+    if avg_rating is None:
+        avg_rating = 0
+
+    context = {
+        'seller': seller,
+        'products': products,
+        'reviews': reviews,
+        'avg_rating': avg_rating, # ✅ ส่งค่าเฉลี่ยไปที่ HTML
+        'review_count': reviews.count() # ✅ ส่งจำนวนรีวิวไปด้วย
+    }
+    return render(request, 'products/seller_profile.html', context)
+
+@login_required
+def add_review(request, seller_id):
+    seller = get_object_or_404(User, pk=seller_id)
+    
+    if request.method == 'POST':
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment')
+        
+        # บันทึกรีวิว
+        Review.objects.create(
+            reviewer=request.user,
+            seller=seller,
+            rating=rating,
+            comment=comment
+        )
+        messages.success(request, 'บันทึกรีวิวเรียบร้อยแล้ว')
+        
+    return redirect('seller_profile', seller_id=seller_id)
+
 @login_required
 def edit_profile(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
         form = ProfileForm(request.POST, request.FILES, instance=profile)
-        
         if form.is_valid():
-            # --- เริ่มส่วนตรวจสอบ QR Code ---
-            uploaded_qr = request.FILES.get('promptpay_qr')
-            account_num = request.POST.get('account_number')
-
-            # ถ้ามีการอัปโหลด QR ใหม่ และ มีเลขบัญชีมาด้วย
-            if uploaded_qr and account_num:
-                is_valid, msg = verify_promptpay_qr(uploaded_qr, account_num)
-                
-                if not is_valid:
-                    # ถ้าตรวจสอบไม่ผ่าน ให้แจ้งเตือนและไม่บันทึก
-                    messages.error(request, f"เกิดข้อผิดพลาด: {msg}")
-                    return render(request, 'edit_profile.html', {'form': form})
-            # --- จบส่วนตรวจสอบ ---
-
             form.save()
-            messages.success(request, "บันทึกข้อมูลโปรไฟล์เรียบร้อยแล้ว")
-            return redirect('edit_profile') # redirect กลับมาหน้าเดิมเพื่อให้เห็นรูปใหม่
+            messages.success(request, 'อัปเดตข้อมูลโปรไฟล์เรียบร้อยแล้ว')
+            return redirect('edit_profile')
     else:
         form = ProfileForm(instance=profile)
 
-    return render(request, 'edit_profile.html', {'form': form})
+    # === [แก้ตรงนี้ครับ] เปลี่ยนจาก UserReview เป็น Review ===
+    # และเปลี่ยนจาก reviewed_user เป็น seller (ตามชื่อ field ใน model ใหม่)
+    my_reviews = Review.objects.filter(seller=request.user).order_by('-created_at')
+    
+    avg_rating = my_reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+    avg_rating = round(avg_rating, 1)
+    review_count = my_reviews.count()
+    # ====================================================
+
+    context = {
+        'form': form,
+        'my_reviews': my_reviews,
+        'avg_rating': avg_rating,
+        'review_count': review_count
+    }
+    return render(request, 'edit_profile.html', context)
 
 @login_required
 def my_listings(request):
@@ -250,3 +298,82 @@ def restore_product(request, pk):
         product.save()
         messages.success(request, f'คืนสถานะสินค้า "{product.name}" เรียบร้อยแล้ว')
     return redirect('admin_dashboard')
+
+@login_required
+def add_review(request, seller_id):
+    # ดึงข้อมูลผู้ขาย
+    seller_user = get_object_or_404(User, pk=seller_id)
+    
+    # ป้องกันไม่ให้รีวิวตัวเอง
+    if request.user == seller_user:
+        messages.error(request, "คุณไม่สามารถรีวิวตัวเองได้")
+        return redirect('seller_profile', seller_id=seller_id)
+
+    if request.method == 'POST':
+        # ตรวจสอบว่าเคยรีวิวไปหรือยัง?
+        # ❌ บรรทัดนี้คือจุดที่น่าจะ Error (reviewed_user -> seller)
+        existing_review = Review.objects.filter(reviewer=request.user, seller=seller_user).exists()
+        
+        if existing_review:
+            messages.warning(request, "คุณเคยรีวิวผู้ขายรายนี้ไปแล้ว")
+        else:
+            rating = request.POST.get('rating')
+            comment = request.POST.get('comment')
+            
+            # บันทึกรีวิว
+            Review.objects.create(
+                reviewer=request.user,
+                seller=seller_user, # ✅ ต้องใช้ seller เท่านั้น (ห้ามใช้ reviewed_user)
+                rating=rating,
+                comment=comment
+            )
+            messages.success(request, "บันทึกรีวิวเรียบร้อยแล้ว")
+            
+    return redirect('seller_profile', seller_id=seller_id)
+
+@login_required
+def toggle_favorite(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)
+    
+    # เช็คว่าเคยกดถูกใจไปหรือยัง
+    if request.user in product.favorites.all():
+        # ถ้ามีแล้ว ให้ลบออก (Unfavorite)
+        product.favorites.remove(request.user)
+        messages.info(request, f'ลบ "{product.name}" ออกจากรายการที่ติดใจแล้ว')
+    else:
+        # ถ้ายังไม่มี ให้เพิ่มเข้าไป (Favorite)
+        product.favorites.add(request.user)
+        messages.success(request, f'เพิ่ม "{product.name}" ลงในรายการที่ติดใจแล้ว')
+    
+    # เด้งกลับไปหน้าเดิมที่กดมา
+    return redirect('product_detail', pk=product_id)
+
+@login_required
+def wishlist(request):
+    # ดึงสินค้าที่ User คนนี้กด favorites เอาไว้
+    products = request.user.favorite_products.filter(status='active').order_by('-created_at')
+    
+    context = {
+        'products': products
+    }
+    return render(request, 'products/wishlist.html', context)
+
+@login_required
+def mark_as_sold(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    
+    # 1. เช็คว่าเป็นเจ้าของสินค้าจริงไหม (ห้ามคนอื่นมากดมั่ว)
+    if request.user != product.seller:
+        messages.error(request, "คุณไม่มีสิทธิ์แก้ไขสินค้านี้")
+        return redirect('product_detail', pk=pk)
+
+    # 2. สลับสถานะ (Toggle)
+    if product.status == 'active':
+        product.status = 'sold'
+        messages.success(request, "ปิดการขายเรียบร้อยแล้ว! (Marked as Sold)")
+    elif product.status == 'sold':
+        product.status = 'active'
+        messages.success(request, "เปิดขายสินค้าใหม่อีกครั้ง (Marked as Active)")
+    
+    product.save()
+    return redirect('product_detail', pk=pk)

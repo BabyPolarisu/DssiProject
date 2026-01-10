@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Category(models.Model):
     name = models.CharField(max_length=100, verbose_name="ชื่อหมวดหมู่")
@@ -46,6 +47,7 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="หมวดหมู่")
     seller = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="ผู้ขาย")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะ")
+    favorites = models.ManyToManyField(User, related_name='favorite_products', blank=True, verbose_name="ผู้ที่กดถูกใจ")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -54,15 +56,21 @@ class Product(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    display_name = models.CharField(max_length=100, verbose_name="ชื่อที่แสดง")
+    display_name = models.CharField(max_length=100, blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name="รูปโปรไฟล์")
-    
-    # ข้อมูลการชำระเงิน
-    promptpay_qr = models.ImageField(upload_to='payment_qr/', blank=True, null=True, verbose_name="QR Code PromptPay")
-    bank_name = models.CharField(max_length=100, blank=True, verbose_name="ธนาคาร")
-    account_number = models.CharField(max_length=20, blank=True, verbose_name="เลขที่บัญชี")
-    account_name = models.CharField(max_length=100, blank=True, verbose_name="ชื่อบัญชี")
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    bio = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.user.username
     
+class Review(models.Model):
+    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_given')
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_received')
+    rating = models.IntegerField(default=5, choices=[(i, i) for i in range(1, 6)])
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.reviewer} -> {self.seller} ({self.rating} stars)"

@@ -21,6 +21,13 @@ urlpatterns = [
     path('dashboard/admin/suspend/<int:pk>/', views.suspend_product, name='suspend_product'),
     path('dashboard/admin/delete/<int:pk>/', views.delete_product_admin, name='delete_product_admin'),
     path('product/restore/<int:pk>/', views.restore_product, name='restore_product'),
-    
+
+    path('seller/<int:seller_id>/', views.seller_profile, name='seller_profile'),
+    path('seller/<int:seller_id>/review/', views.add_review, name='add_review'),
+
+    path('product/<int:product_id>/favorite/', views.toggle_favorite, name='toggle_favorite'),
+    path('wishlist/', views.wishlist, name='wishlist'),
+
+    path('product/<int:pk>/mark-sold/', views.mark_as_sold, name='mark_as_sold'),
     
 ]
