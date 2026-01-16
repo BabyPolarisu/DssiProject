@@ -37,8 +37,8 @@
                 <a href="{% url 'seller_profile' product.seller.pk %}" class="flex items-center gap-2 group/seller hover:bg-gray-50 pr-2 rounded-full transition-colors">
                     
                     <div class="relative w-8 h-8">
-                        {% if product.seller.userprofile.avatar %}
-                            <img src="{{ product.seller.userprofile.avatar.url }}" 
+                        {% if product.seller.profile.avatar %}
+                            <img src="{{ product.seller.profile.avatar.url }}" 
                                  class="w-8 h-8 rounded-full object-cover border border-gray-200 group-hover/seller:border-blue-300">
                         {% else %}
                             <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
@@ -48,7 +48,7 @@
                     </div>
 
                     <span class="text-xs text-gray-600 font-medium group-hover/seller:text-blue-600 truncate max-w-[80px]">
-                        {{ product.seller.userprofile.display_name|default:product.seller.username }}
+                        {{ product.seller.profile.display_name|default:product.seller.username }}
                     </span>
                 </a>
 

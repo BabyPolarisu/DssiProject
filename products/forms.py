@@ -2,13 +2,13 @@
 
 from django import forms
 from .models import Product, Category, UserProfile, Review
+from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        # เพิ่ม 'image' เข้าไปใน list นี้
         fields = ['name', 'category', 'price', 'condition', 'description', 'image']
         
         widgets = {
@@ -36,8 +36,8 @@ class ProductForm(forms.ModelForm):
             'category': 'หมวดหมู่ *',
             'price': 'ราคา *',
             'condition': 'สภาพสินค้า *',
-            'description': 'รายละเอียด',
-            'image': 'รูปภาพสินค้า',
+            'description': 'รายละเอียด *',
+            'image': 'รูปภาพสินค้า *',
         }
         
     def __init__(self, *args, **kwargs):
@@ -68,4 +68,65 @@ class ReviewForm(forms.ModelForm):
         widgets = {
             'rating': forms.Select(attrs={'class': 'w-full border rounded-lg px-3 py-2'}),
             'comment': forms.Textarea(attrs={'class': 'w-full border rounded-lg px-3 py-2', 'rows': 3, 'placeholder': 'เขียนรีวิวให้ผู้ขายคนนี้...'}),
+        }
+
+class UserUpdateForm(forms.ModelForm):
+    # 1. บังคับให้เป็น required=True (ห้ามว่าง)
+    first_name = forms.CharField(
+        label="ชื่อจริง",
+        required=True, 
+        widget=forms.TextInput(attrs={'class': 'form-input w-full rounded-lg border-gray-300', 'placeholder': 'ระบุชื่อจริงภาษาไทย'})
+    )
+    last_name = forms.CharField(
+        label="นามสกุล",
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-input w-full rounded-lg border-gray-300', 'placeholder': 'ระบุบามสกุล'})
+    )
+    email = forms.EmailField(
+        label="อีเมลสถาบัน",
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-input w-full rounded-lg border-gray-300'})
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'bg-gray-100 text-gray-500 cursor-not-allowed w-full rounded-lg border-gray-300', 'readonly': 'readonly'}),
+        }
+
+    # 2. ฟังก์ชันตรวจสอบอีเมล (Validation)
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        
+        # เปลี่ยน @ubu.ac.th เป็นโดเมนมหาวิทยาลัยของคุณ
+        allowed_domain = '@ubu.ac.th' 
+        
+        if not email.endswith(allowed_domain):
+            raise ValidationError(f"กรุณาใช้อีเมลมหาวิทยาลัย ({allowed_domain}) เท่านั้น")
+        
+        # เช็คว่าอีเมลซ้ำกับคนอื่นไหม (ยกเว้นตัวเอง)
+        if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+            raise ValidationError("อีเมลนี้มีผู้ใช้งานแล้ว")
+
+        return email
+
+# ฟอร์มสำหรับแก้ไขข้อมูลโปรไฟล์เพิ่มเติม (UserProfile)
+class ProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['display_name', 'avatar', 'phone_number', 'address', 'bio']
+        labels = {
+            'display_name': 'ชื่อที่ใช้แสดง / ชื่อร้านค้า',
+            'avatar': 'รูปโปรไฟล์',
+            'phone_number': 'เบอร์โทรศัพท์',
+            'address': 'ที่อยู่จัดส่ง / ติดต่อ',
+            'bio': 'เกี่ยวกับฉัน / รายละเอียดร้านค้า',
+        }
+        widgets = {
+            'display_name': forms.TextInput(attrs={'class': 'form-input w-full rounded-lg border-2'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-input w-full rounded-lg border-2'}),
+            'address': forms.Textarea(attrs={'class': 'form-textarea w-full rounded-lg border-2', 'rows': 3}),
+            'bio': forms.Textarea(attrs={'class': 'form-textarea w-full rounded-lg border-2', 'rows': 4}),
+            'avatar': forms.FileInput(attrs={'class': 'file-input w-full border border-2 rounded-lg'}),
         }

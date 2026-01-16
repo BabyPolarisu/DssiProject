@@ -1,106 +1,261 @@
 {% extends 'base.html' %}
+{% load humanize %}
+{% load tz %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto my-10 bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-[600px]">
+<div class="max-w-3xl mx-auto my-6 sm:my-10 bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col h-[85vh] border border-gray-100">
     
-    <div class="bg-blue-600 p-4 flex items-center justify-between text-white">
-        <div>
-            <h2 class="font-bold text-lg">
+    <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-3 sm:p-4 flex items-center justify-between text-white shadow-md z-10">
+        <div class="flex items-center gap-2 sm:gap-3">
+            <a href="{% url 'chat_list' %}" class="p-2 -ml-2 rounded-full hover:bg-white/20 transition text-white/90 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </a>
+
+            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg font-bold backdrop-blur-sm shadow-inner flex-shrink-0 overflow-hidden">
                 {% if request.user == room.buyer %}
-                    แชทกับผู้ขาย: {{ room.seller.username }}
+                    {% if room.seller_avatar_url %}
+                        <img src="{{ room.seller_avatar_url }}" class="w-full h-full object-cover">
+                    {% else %}
+                        {{ room.seller.first_name|slice:":1"|upper }}
+                    {% endif %}
                 {% else %}
-                    แชทกับผู้ซื้อ: {{ room.buyer.username }}
+                    {% if room.buyer_avatar_url %}
+                        <img src="{{ room.buyer_avatar_url }}" class="w-full h-full object-cover">
+                    {% else %}
+                        {{ room.buyer.first_name|slice:":1"|upper }}
+                    {% endif %}
                 {% endif %}
-            </h2>
-            <p class="text-sm text-blue-100">สนใจสินค้า: {{ room.product.name }}</p>
+            </div>
+            
+            <div class="leading-tight overflow-hidden">
+                <h2 class="font-bold text-lg truncate">
+                    {% if request.user == room.buyer %}
+                        {{ room.seller_name }}
+                    {% else %}
+                        {{ room.buyer_name }}
+                    {% endif %}
+                </h2>
+                <div class="flex items-center gap-1 text-blue-100 text-xs mt-0.5">
+                    <span class="font-medium truncate max-w-[120px]">ชื่อสินค้า: {{ room.product.name }}</span>
+                </div>
+            </div>
         </div>
-        <a href="{% url 'product_detail' room.product.id %}" class="text-sm bg-blue-500 hover:bg-blue-400 px-3 py-1 rounded">กลับไปดูสินค้า</a>
+        
+        <a href="{% url 'product_detail' room.product.id %}" class="flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition border border-white/10 backdrop-blur-sm">
+            <span class="whitespace-nowrap">ดูสินค้า</span>
+            <span class="font-bold hidden sm:inline">฿{{ room.product.price|intcomma }}</span>
+        </a>
     </div>
 
-    <div id="chat-log" class="flex-1 p-4 overflow-y-auto bg-gray-50 space-y-4">
+    <div id="chat-log" class="flex-1 p-4 overflow-y-auto bg-[#F0F2F5] space-y-3 custom-scrollbar">
         {% for message in messages %}
-            <div class="flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
-                <div class="max-w-[70%] px-4 py-2 rounded-lg {% if message.sender == request.user %}bg-blue-500 text-white{% else %}bg-gray-200 text-gray-800{% endif %}">
-                    {{ message.content }}
+            <div class="flex w-full {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %} animate-fade-in-up">
+                <div class="flex flex-col max-w-[80%] sm:max-w-[65%] space-y-1">
+                    {% if message.image %}
+                        <div>
+                            <a href="{{ message.image.url }}" target="_blank">
+                                <img src="{{ message.image.url }}" class="rounded-2xl w-full h-auto max-h-72 object-cover hover:opacity-95 transition shadow-sm border border-gray-200/50">
+                            </a>
+                        </div>
+                    {% endif %}
+
+                    {% if message.content %}
+                        <div class="px-4 py-2 shadow-sm relative text-sm
+                            {% if message.sender == request.user %}
+                                bg-blue-600 text-white rounded-2xl rounded-tr-none
+                            {% else %}
+                                bg-white text-gray-800 border border-gray-100 rounded-2xl rounded-tl-none
+                            {% endif %}">
+                            <p class="leading-relaxed whitespace-pre-wrap break-words">{{ message.content }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    <span class="text-[10px] mt-1 text-gray-400 px-1 {% if message.sender == request.user %}text-right{% else %}text-left{% endif %}">
+                        {{ message.timestamp|timezone:"Asia/Bangkok"|date:"H:i" }}
+                    </span>
                 </div>
+            </div>
+        {% empty %}
+            <div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-3 opacity-60">
+                <p>เริ่มสนทนาได้เลย!</p>
             </div>
         {% endfor %}
     </div>
 
-    <div class="p-4 bg-white border-t border-gray-200">
-        <div class="flex gap-2">
-            <input id="chat-message-input" type="text" class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="พิมพ์ข้อความ...">
-            <button id="chat-message-submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-bold">ส่ง</button>
-        </div>
-        <div class="mt-2 flex gap-2 overflow-x-auto pb-2">
-            <button onclick="sendQuickMessage('📍 สะดวกนัดรับที่โรงอาหารกลาง')" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border">📍 โรงอาหารกลาง</button>
-            <button onclick="sendQuickMessage('📍 สะดวกนัดรับหน้าตึกคณะ')" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border">📍 หน้าตึกคณะ</button>
-            <button onclick="sendQuickMessage('📦 สินค้านี้ยังอยู่ไหมครับ?')" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border">📦 สินค้าอยู่ไหม?</button>
-        </div>
+    <div class="px-4 py-2 bg-white border-t border-gray-50 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide z-20">
+        <button onclick="setQuickChat(this)" class="px-3 py-1.5 bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-600 text-xs rounded-full transition border border-gray-200 hover:border-blue-200">
+            สินค้ายังอยู่ไหม?
+        </button>
+        <button onclick="setQuickChat(this)" class="px-3 py-1.5 bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-600 text-xs rounded-full transition border border-gray-200 hover:border-blue-200">
+            ลดราคาได้ไหม?
+        </button>
+        <button onclick="setQuickChat(this)" class="px-3 py-1.5 bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-600 text-xs rounded-full transition border border-gray-200 hover:border-blue-200">
+            ขอดูรูปเพิ่มเติม
+        </button>
+        <button onclick="setQuickChat(this)" class="px-3 py-1.5 bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-600 text-xs rounded-full transition border border-gray-200 hover:border-blue-200">
+            สะดวกนัดรับที่ไหน?
+        </button>
+    </div>
+
+    <div class="bg-white p-3 sm:p-4 pt-2 border-t border-gray-100 z-20">
+        <form id="chat-form" method="post" enctype="multipart/form-data" class="flex items-end gap-2 bg-gray-50 p-2 rounded-3xl border border-gray-200 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-300 transition-all shadow-sm">
+            {% csrf_token %}
+            
+            <div class="relative group">
+                <input id="image-upload" name="image" type="file" class="hidden" accept="image/*" onchange="showFileName(this)">
+                <label for="image-upload" class="flex items-center justify-center w-10 h-10 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 cursor-pointer transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </label>
+                <div id="file-indicator" class="hidden absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></div>
+            </div>
+
+            <div class="flex-1 flex flex-col justify-center min-w-0">
+                <div id="file-preview-area" class="hidden mb-1 mx-1">
+                    <div class="inline-flex items-center bg-blue-50 text-blue-700 text-xs px-3 py-1 rounded-full border border-blue-100 shadow-sm">
+                        <span class="mr-1">🖼️</span>
+                        <span id="file-name-text" class="truncate max-w-[150px]">image.jpg</span>
+                        <button type="button" onclick="clearFile()" class="ml-2 text-blue-400 hover:text-red-500 font-bold">×</button>
+                    </div>
+                </div>
+                <input type="text" name="content" id="chat-input" class="w-full py-2 px-3 bg-transparent border-none focus:ring-0 placeholder-gray-400 text-gray-700 font-medium" placeholder="พิมพ์ข้อความ..." autocomplete="off">
+            </div>
+
+            <button type="submit" class="p-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 active:scale-95 transition-all shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rotate-90 translate-x-[1px]" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+            </button>
+        </form>
     </div>
 </div>
 
+<style>
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+</style>
+
 <script>
-    const roomId = {{ room.id }};
-    const userId = {{ request.user.id }};
+    const currentUserId = "{{ request.user.id }}"; // ✅ เก็บ ID เราไว้เทียบ
 
-    const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+    // ฟังก์ชันเลื่อนลงล่างแบบ Smooth
+    function scrollToBottom(smooth = false) {
+        const chatLog = document.getElementById('chat-log');
+        if(chatLog) {
+            chatLog.scrollTo({
+                top: chatLog.scrollHeight,
+                behavior: smooth ? 'smooth' : 'auto'
+            });
+        }
+    }
     
-    // เชื่อมต่อ WebSocket
-    const chatSocket = new WebSocket(
-        ws_scheme + '://' + window.location.host + '/ws/chat/' + roomId + '/'
-    );
+    window.onload = () => scrollToBottom(false); // โหลดครั้งแรกไม่ต้อง Smooth
 
-    // เมื่อมีข้อความเข้ามา
-    chatSocket.onmessage = function(e) {
-        const data = JSON.parse(e.data);
-        const chatLog = document.querySelector('#chat-log');
+    function setQuickChat(btn) {
+        const input = document.getElementById('chat-input');
+        input.value = btn.innerText;
+        input.focus();
+    }
+
+    function showFileName(input) {
+        if (input.files && input.files[0]) {
+            document.getElementById('file-name-text').textContent = input.files[0].name;
+            document.getElementById('file-preview-area').classList.remove('hidden'); 
+            document.getElementById('file-indicator').classList.remove('hidden');
+        }
+    }
+
+    function clearFile() {
+        document.getElementById('image-upload').value = ''; 
+        document.getElementById('file-preview-area').classList.add('hidden'); 
+        document.getElementById('file-indicator').classList.add('hidden'); 
+    }
+
+    // ✅ ส่วนส่งข้อความแบบ JSON (ไหลลื่น)
+    document.getElementById('chat-form').addEventListener('submit', function(e) {
+        e.preventDefault(); // บรรทัดนี้สำคัญมาก ห้ามลบ!
+        console.log("Chat form submitting via AJAX...");
+
+        const form = this;
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        if (!formData.get('content').trim() && (!formData.get('image') || formData.get('image').size === 0)) {
+            return;
+        }
+
+        submitBtn.disabled = true;
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json()) // ✅ รับค่าเป็น JSON
+        .then(data => {
+            if (data.status === 'success') {
+                appendMessage(data); // ✅ เรียกฟังก์ชันสร้างกล่องข้อความ
+                
+                // เคลียร์ค่า
+                document.getElementById('chat-input').value = '';
+                clearFile();
+                scrollToBottom(true); // เลื่อนลงแบบ Smooth
+            }
+        })
+        .catch(err => console.error('Error:', err))
+        .finally(() => {
+            submitBtn.disabled = false;
+            document.getElementById('chat-input').focus();
+        });
+    });
+
+    // ✅ ฟังก์ชันสร้าง HTML กล่องข้อความใหม่ (โดยไม่ต้องรีเฟรช)
+    function appendMessage(data) {
+        const chatLog = document.getElementById('chat-log');
         
-        // สร้าง HTML ของข้อความใหม่
-        const isMe = data.sender_id === userId;
-        const msgHtml = `
-            <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
-                <div class="max-w-[70%] px-4 py-2 rounded-lg ${isMe ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}">
-                    ${data.message}
+        // สร้าง HTML ของรูปภาพ (ถ้ามี)
+        let imageHtml = '';
+        if (data.image_url) {
+            imageHtml = `
+                <div>
+                    <a href="${data.image_url}" target="_blank">
+                        <img src="${data.image_url}" class="rounded-2xl w-full h-auto max-h-72 object-cover hover:opacity-95 transition shadow-sm border border-gray-200/50">
+                    </a>
+                </div>`;
+        }
+
+        // สร้าง HTML ของข้อความ (ถ้ามี)
+        let contentHtml = '';
+        if (data.content) {
+            contentHtml = `
+                <div class="px-4 py-2 shadow-sm relative text-sm bg-blue-600 text-white rounded-2xl rounded-tr-none">
+                    <p class="leading-relaxed whitespace-pre-wrap break-words">${data.content}</p>
+                </div>`;
+        }
+
+        // โครงสร้างหลัก (ฝั่งขวา - ผู้ส่งคือเราเสมอ)
+        const messageHtml = `
+            <div class="flex w-full justify-end animate-fade-in-up">
+                <div class="flex flex-col max-w-[80%] sm:max-w-[65%] space-y-1">
+                    ${imageHtml}
+                    ${contentHtml}
+                    <span class="text-[10px] mt-1 text-gray-400 px-1 text-right">
+                        ${data.timestamp}
+                    </span>
                 </div>
             </div>
         `;
-        
-        chatLog.insertAdjacentHTML('beforeend', msgHtml);
-        chatLog.scrollTop = chatLog.scrollHeight; // เลื่อนลงล่างสุด
-    };
 
-    chatSocket.onclose = function(e) {
-        console.error('Chat socket closed unexpectedly');
-    };
-
-    // การส่งข้อความ
-    document.querySelector('#chat-message-input').focus();
-    document.querySelector('#chat-message-input').onkeyup = function(e) {
-        if (e.keyCode === 13) {  // enter key
-            document.querySelector('#chat-message-submit').click();
-        }
-    };
-
-    document.querySelector('#chat-message-submit').onclick = function(e) {
-        const messageInputDom = document.querySelector('#chat-message-input');
-        const message = messageInputDom.value;
-        
-        if(message.trim() !== "") {
-            chatSocket.send(JSON.stringify({
-                'message': message,
-                'sender_id': userId
-            }));
-            messageInputDom.value = '';
-        }
-    };
-
-    // ฟังก์ชันสำหรับปุ่มนัดรับ
-    function sendQuickMessage(msg) {
-        chatSocket.send(JSON.stringify({
-            'message': msg,
-            'sender_id': userId
-        }));
+        // แปะต่อท้ายแชทเดิม
+        chatLog.insertAdjacentHTML('beforeend', messageHtml);
     }
 </script>
 {% endblock %}

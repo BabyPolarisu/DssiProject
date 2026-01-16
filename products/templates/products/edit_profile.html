@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto my-10 px-4">
+    
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-r shadow-sm">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-bold text-yellow-800">กรุณาตรวจสอบความถูกต้อง</h3>
+                <div class="mt-2 text-sm text-yellow-700">
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>ต้องระบุ <strong>ชื่อจริง และ นามสกุล</strong> ให้ถูกต้องเพื่อความน่าเชื่อถือ</li>
+                        <li>ต้องใช้ <strong>อีเมลมหาวิทยาลัย (@ubu.ac.th)</strong> ในการติดต่อเท่านั้น</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white">
+            <h2 class="text-3xl font-bold">แก้ไขข้อมูลส่วนตัว</h2>
+            <p class="opacity-80">จัดการข้อมูลบัญชีและร้านค้าของคุณ</p>
+        </div>
+
+        <div class="p-8">
+            <form method="POST" enctype="multipart/form-data" class="space-y-8">
+                {% csrf_token %}
+
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 border-b pb-2 mb-4 flex items-center gap-2">
+                        <span>🔐</span> ข้อมูลบัญชีผู้ใช้
+                    </h3>
+                    
+                    {% if u_form.errors %}
+                        <div class="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
+                            พบข้อผิดพลาด กรุณาตรวจสอบข้อมูลด้านล่าง
+                        </div>
+                    {% endif %}
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                            {{ u_form.username }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">อีเมลสถาบัน <span class="text-red-500">*</span></label>
+                            {{ u_form.email }}
+                            {% if u_form.email.errors %}
+                                <p class="text-red-500 text-xs mt-1">{{ u_form.email.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อจริง <span class="text-red-500">*</span></label>
+                            {{ u_form.first_name }}
+                            {% if u_form.first_name.errors %}
+                                <p class="text-red-500 text-xs mt-1">{{ u_form.first_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">นามสกุล <span class="text-red-500">*</span></label>
+                            {{ u_form.last_name }}
+                            {% if u_form.last_name.errors %}
+                                <p class="text-red-500 text-xs mt-1">{{ u_form.last_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 border-b pb-2 mb-4 flex items-center gap-2">
+                        <span>🏪</span> ข้อมูลร้านค้า / โปรไฟล์
+                    </h3>
+                    
+                    <div class="flex items-center gap-6 mb-6">
+                        <div class="relative">
+                            {% if user.profile.avatar %}
+                                <img src="{{ user.profile.avatar.url }}" class="w-24 h-24 rounded-full object-cover border-4 border-gray-100 shadow-lg">
+                            {% else %}
+                                <div class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-3xl">👤</div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">รูปโปรไฟล์</label>
+                            {{ p_form.avatar }}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อที่ใช้แสดง</label>
+                            {{ p_form.display_name }}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
+                            {{ p_form.phone_number }}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ที่อยู่ / รายละเอียดร้าน</label>
+                            {{ p_form.address }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t flex justify-end gap-4">
+                    <a href="{% url 'home' %}" class="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">ยกเลิก</a>
+                    <button type="submit" class="px-8 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg font-bold">
+                        บันทึกการเปลี่ยนแปลง
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

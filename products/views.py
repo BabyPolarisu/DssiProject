@@ -6,7 +6,8 @@ from django.contrib import admin
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Avg
-from .forms import ProductForm, CustomUserCreationForm, ProfileForm, ReviewForm 
+from .forms import ProductForm, CustomUserCreationForm, ProfileForm, ReviewForm, UserUpdateForm, ProfileUpdateForm
+from django.db.models import Q
 from .models import Product, Category, UserProfile, Review
 # from .utils import verify_promptpay_qr
 
@@ -118,33 +119,27 @@ def add_review(request, seller_id):
 
 @login_required
 def edit_profile(request):
-    profile, created = UserProfile.objects.get_or_create(user=request.user)
-
     if request.method == 'POST':
-        form = ProfileForm(request.POST, request.FILES, instance=profile)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'อัปเดตข้อมูลโปรไฟล์เรียบร้อยแล้ว')
-            return redirect('edit_profile')
-    else:
-        form = ProfileForm(instance=profile)
+        # ส่งข้อมูลเข้าทั้ง 2 ฟอร์ม
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
 
-    # === [แก้ตรงนี้ครับ] เปลี่ยนจาก UserReview เป็น Review ===
-    # และเปลี่ยนจาก reviewed_user เป็น seller (ตามชื่อ field ใน model ใหม่)
-    my_reviews = Review.objects.filter(seller=request.user).order_by('-created_at')
-    
-    avg_rating = my_reviews.aggregate(Avg('rating'))['rating__avg'] or 0
-    avg_rating = round(avg_rating, 1)
-    review_count = my_reviews.count()
-    # ====================================================
+        # ต้อง Valid ทั้งคู่ถึงจะยอม Save
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, 'อัปเดตข้อมูลโปรไฟล์เรียบร้อยแล้ว!')
+            return redirect('edit_profile') # หรือ redirect ไปหน้า profile_detail
+    else:
+        # โหลดข้อมูลเดิมมาแสดง
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.profile)
 
     context = {
-        'form': form,
-        'my_reviews': my_reviews,
-        'avg_rating': avg_rating,
-        'review_count': review_count
+        'u_form': u_form,
+        'p_form': p_form
     }
-    return render(request, 'edit_profile.html', context)
+    return render(request, 'products/edit_profile.html', context)
 
 @login_required
 def my_listings(request):
@@ -377,3 +372,27 @@ def mark_as_sold(request, pk):
     
     product.save()
     return redirect('product_detail', pk=pk)
+
+def seller_profile(request, seller_id): # หรือชื่อ profile_detail ตาม URL ของคุณ
+    # 1. ดึงข้อมูลผู้ขาย (ใช้ชื่อตัวแปร seller ให้ตรงกับ HTML)
+    seller = get_object_or_404(User, pk=seller_id)
+    
+    # 2. ดึงสินค้า (ใช้ชื่อ selling_products ให้ตรงกับ HTML)
+    # เงื่อนไข: ต้องเป็นของ seller คนนี้ และสถานะต้อง active
+    selling_products = Product.objects.filter(seller=seller, status='active').order_by('-created_at')
+    
+    # 3. ดึงรีวิว
+    reviews = Review.objects.filter(seller=seller).order_by('-created_at')
+    
+    # 4. คำนวณคะแนนเฉลี่ย
+    avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+
+    context = {
+        'seller': seller,                # ✅ แก้จาก target_user เป็น seller
+        'selling_products': selling_products, # ✅ ตรงกับ HTML แล้ว
+        'reviews': reviews,
+        'review_count': reviews.count(),
+        'avg_rating': round(avg_rating, 1),
+        'range_5': range(1, 6),
+    }
+    return render(request, 'products/seller_profile.html', context)
