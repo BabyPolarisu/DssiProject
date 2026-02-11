@@ -8,7 +8,7 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 # ติดตั้ง Dependencies
-COPY requirements.txt /app/
+COPY . /app/
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # ติดตั้ง Netcat (เผื่อไว้ใช้รอ DB start)
