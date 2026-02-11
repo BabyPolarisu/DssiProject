@@ -19,3 +19,6 @@ COPY . /app/
 
 # สร้างโฟลเดอร์สำหรับ Static files (เพื่อให้ Nginx เข้าถึงได้)
 RUN mkdir -p /app/static /app/media
+
+# คำสั่งรัน Server เมื่อขึ้น Production
+CMD gunicorn unimarket.wsgi:application --bind 0.0.0.0:8000
