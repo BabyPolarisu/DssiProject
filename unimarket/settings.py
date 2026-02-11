@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import dj_database_url
 import os
 from pathlib import Path
 
@@ -96,25 +96,32 @@ ASGI_APPLICATION = 'unimarket.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-if os.environ.get("DATABASE_URL") == "postgres":
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get("SQL_DATABASE", "unimarket_db"),
-            'USER': os.environ.get("SQL_USER", "unimarket_user"),
-            'PASSWORD': os.environ.get("SQL_PASSWORD", "password"),
-            'HOST': os.environ.get("SQL_HOST", "db"),
-            'PORT': '5432',
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+DATABASES = {
+    'default': dj_database_url.config(
+        # 1. ถ้ามี DATABASE_URL (บน Render) จะใช้ Postgres อัตโนมัติ
+        # 2. ถ้าไม่มี (ในเครื่อง หรือ Render แบบไม่ต่อ DB) จะใช้ SQLite ตามบรรทัดล่างนี้
+        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
+        conn_max_age=600
+    )
+}
+# if os.environ.get("DATABASE_URL") == "postgres":
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': os.environ.get("SQL_DATABASE", "unimarket_db"),
+#             'USER': os.environ.get("SQL_USER", "unimarket_user"),
+#             'PASSWORD': os.environ.get("SQL_PASSWORD", "password"),
+#             'HOST': os.environ.get("SQL_HOST", "db"),
+#             'PORT': '5432',
+#         }
+#     }
+# else:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': BASE_DIR / 'db.sqlite3',
+#         }
+#     }
 
 
 # Password validation
