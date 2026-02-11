@@ -96,14 +96,26 @@ ASGI_APPLICATION = 'unimarket.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-DATABASES = {
-    'default': dj_database_url.config(
-        # 1. ถ้ามี DATABASE_URL (บน Render) จะใช้ Postgres อัตโนมัติ
-        # 2. ถ้าไม่มี (ในเครื่อง หรือ Render แบบไม่ต่อ DB) จะใช้ SQLite ตามบรรทัดล่างนี้
-        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
-        conn_max_age=600
-    )
-}
+if 'RENDER' in os.environ:
+    # --- กรณีอยู่บน Render (Production) ---
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    # --- กรณีอยู่เครื่องเรา (Local Docker) ---
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('SQL_DATABASE', 'unimarket_db'),
+            'USER': os.environ.get('SQL_USER', 'unimarket_user'),
+            'PASSWORD': os.environ.get('SQL_PASSWORD', 'unimarket_password_secret'),
+            'HOST': os.environ.get('SQL_HOST', 'db'), # ชื่อ service ใน docker-compose
+            'PORT': os.environ.get('SQL_PORT', '5432'),
+        }
+    }
 # if os.environ.get("DATABASE_URL") == "postgres":
 #     DATABASES = {
 #         'default': {
