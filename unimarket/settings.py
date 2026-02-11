@@ -39,6 +39,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 INSTALLED_APPS = [
     'daphne',
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -82,6 +83,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'products.context_processors.notifications',
             ],       
         },
     },
@@ -171,6 +173,8 @@ SOCIALACCOUNT_LOGIN_ON_GET = True
 # ปิดหน้า Signup Form (ถ้าข้อมูลครบ ให้ข้ามหน้ากรอกข้อมูลเพิ่มไปเลย)
 SOCIALACCOUNT_AUTO_SIGNUP = True
 
+SOCIALACCOUNT_ADAPTER = 'products.adapter.MySocialAccountAdapter'
+
 # =========================================================
 # 7. Channels (Redis for Production / InMemory for Dev)
 # =========================================================
@@ -217,5 +221,25 @@ SOCIALACCOUNT_PROVIDERS = {
             'hd': 'ubu.ac.th',
         }
     }
+}
+
+JAZZMIN_SETTINGS = {
+    "site_title": "UniMarket Admin",
+    "site_header": "UniMarket",
+    "site_brand": "UniMarket Control",
+    "welcome_sign": "ยินดีต้อนรับสู่ระบบจัดการ UniMarket",
+    "search_model": "auth.User",
+    "topmenu_links": [
+        {"name": "หน้าเว็บไซต์", "url": "home", "permissions": ["auth.view_user"]},
+    ],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "products.Product": "fas fa-box",
+        "products.Report": "fas fa-exclamation-triangle",
+    },
 }
 

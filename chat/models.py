@@ -64,6 +64,16 @@ class ChatRoom(models.Model):
     @property
     def buyer_name(self):
         return self.get_user_display_name(self.buyer)
+    
+    @property
+    def queue_sequence(self):
+        """คืนค่าลำดับคิวของแชทนี้ (เทียบกับแชทอื่นในสินค้าเดียวกัน)"""
+        # นับจำนวนห้องแชทของสินค้านี้ ที่สร้าง "ก่อน" ห้องนี้
+        q_count = ChatRoom.objects.filter(
+            product=self.product, 
+            created_at__lt=self.created_at
+        ).count()
+        return q_count + 1
 
 
 class Message(models.Model):
@@ -75,6 +85,12 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender}: {self.content[:20]}"
+
+    # ✅ เพิ่มส่วนนี้เข้าไปครับ
+    @property
+    def sender_avatar_url(self):
+        # เรียกใช้ฟังก์ชันจาก ChatRoom ที่คุณเขียนไว้แล้ว
+        return self.room.get_user_avatar(self.sender)
 
 # --- ส่วนเดิม (Profile ของ Chat - เก็บไว้ตามคำขอ ห้ามลบ) ---
 class Profile(models.Model):

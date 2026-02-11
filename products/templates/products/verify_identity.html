@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-xl mx-auto px-4 py-12">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="p-6 bg-red-600 text-white text-center">
+            <h2 class="text-2xl font-bold">ยืนยันตัวตนนักศึกษา 🎓</h2>
+            <p class="opacity-90 mt-1">ยืนยันตัวตนวันนี้ เพื่อเริ่มขายสินค้ากับเรา</p>
+        </div>
+
+        <div class="p-8">
+            {% if existing_req %}
+                <div class="text-center space-y-4">
+                    {% if existing_req.status == 'pending' %}
+                        <div class="w-20 h-20 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto text-3xl">⏳</div>
+                        <h3 class="text-xl font-bold text-gray-800">กำลังตรวจสอบ</h3>
+                        <p class="text-gray-600">แอดมินกำลังตรวจสอบเอกสารของคุณ<br>คุณจะเริ่มขายสินค้าได้ทันทีที่ผ่านการอนุมัติ</p>
+                    
+                    {% elif existing_req.status == 'approved' %}
+                        <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-3xl">✅</div>
+                        <h3 class="text-xl font-bold text-gray-800">ยืนยันตัวตนสำเร็จ!</h3>
+                        <p class="text-gray-600 mb-6">บัญชีของคุณได้รับสิทธิ์ผู้ขายแล้ว</p>
+                        <a href="{% url 'product_create' %}" class="inline-block w-full py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition shadow-lg">
+                            ไปหน้าลงขายสินค้า 🛍️
+                        </a>
+                    
+                    {% elif existing_req.status == 'rejected' %}
+                        <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-3xl">❌</div>
+                        <h3 class="text-xl font-bold text-gray-800">คำขอถูกปฏิเสธ</h3>
+                        <p class="text-gray-600 mt-4">กรุณาอัปโหลดรูปบัตรนักศึกษาใหม่ที่ชัดเจนกว่าเดิม</p>
+                    {% endif %}
+                </div>
+
+                {% if existing_req.status == 'rejected' %}
+                    <hr class="my-6 border-gray-200">
+                    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+                        {% csrf_token %}
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">อัปโหลดรูปใหม่</label>
+                            {{ form.student_card_image }}
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition">
+                            ส่งตรวจสอบอีกครั้ง
+                        </button>
+                    </form>
+                {% endif %}
+
+            {% else %}
+                <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+                    <div class="text-center">
+                        <p class="text-gray-600 mb-4">กรุณาถ่ายรูป <strong>"บัตรนักศึกษา"</strong> ให้เห็นชื่อและรหัสนักศึกษาชัดเจน</p>
+                    </div>
+                    
+                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 bg-gray-50 text-center hover:bg-gray-100 transition">
+                        {{ form.student_card_image }}
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition shadow-lg">
+                        ส่งเอกสารยืนยันตัวตน
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

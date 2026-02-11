@@ -79,6 +79,9 @@
             <div class="prose prose-blue text-gray-600 mb-8">
                 <h3 class="text-lg font-bold text-gray-900 mb-2">รายละเอียดสินค้า</h3>
                 <p class="leading-relaxed whitespace-pre-line">{{ product.description|default:"ไม่มีรายละเอียดเพิ่มเติม" }}</p>
+                <button onclick="openReportModal('product', '{{ product.id }}')" class="text-gray-400 hover:text-red-500 text-xs flex items-center gap-1 mt-4">
+                🚩 รายงานสินค้านี้
+                </button>
             </div>
 
             <div class="mt-auto bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">

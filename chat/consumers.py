@@ -44,13 +44,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     # รับข้อความจากกลุ่ม แล้วส่งกลับไปหา Frontend
     async def chat_message(self, event):
-        message = event['message']
-        sender_id = event['sender_id']
-
-        await self.send(text_data=json.dumps({
-            'message': message,
-            'sender_id': sender_id
-        }))
+        # ส่งต่อข้อมูล JSON ไปให้ Frontend (JavaScript)
+        await self.send(text_data=json.dumps(event['message_data']))
 
     @database_sync_to_async
     def save_message(self, sender_id, message):

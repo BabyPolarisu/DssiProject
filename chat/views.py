@@ -3,9 +3,11 @@ import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from .models import ChatRoom, Message
 from .forms import MessageForm
-from products.models import Product
+from products.models import Product, Notification
 
 @login_required
 def start_chat(request, product_id):
@@ -29,7 +31,6 @@ def start_chat(request, product_id):
 def chat_room(request, room_id):
     room = get_object_or_404(ChatRoom, id=room_id)
     
-    # ตรวจสอบสิทธิ์ (Security Check)
     if request.user != room.buyer and request.user != room.seller:
         return redirect('chat_list')
 
@@ -38,24 +39,37 @@ def chat_room(request, room_id):
         image = request.FILES.get('image')
 
         if content or image:
+            # 1. บันทึกลงฐานข้อมูลปกติ
             message = Message.objects.create(
                 room=room,
                 sender=request.user,
                 content=content,
                 image=image
             )
-            
-            # ✅ อัปเดตล่าสุด: ถ้าเป็น AJAX Request ให้ส่ง JSON กลับไป
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'status': 'success',
-                    'content': message.content,
-                    'image_url': message.image.url if message.image else None,
-                    'timestamp': message.timestamp.strftime('%H:%M'), # จัดรูปแบบเวลา
-                    'sender_id': message.sender.id
-                })
 
-            # (Fallback) ถ้าไม่ใช่ AJAX ให้รีเฟรชหน้าปกติ
+            # 2. เตรียมข้อมูลที่จะส่งเข้า WebSocket
+            message_data = {
+                'sender_id': message.sender.id,
+                'content': message.content,
+                'image_url': message.image.url if message.image else None,
+                'timestamp': message.timestamp.strftime('%H:%M'),
+                'sender_avatar': room.get_user_avatar(message.sender) # ใช้ helper ที่คุณมีใน models.py
+            }
+
+            # 3. 🔥 ส่งสัญญาณเข้า Channel Layer (Real-time Trigger)
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f'chat_{room.id}',  # ชื่อกลุ่มต้องตรงกับใน consumers.py
+                {
+                    'type': 'chat_message', # ชื่อฟังก์ชันใน consumers.py
+                    'message_data': message_data
+                }
+            )
+            
+            # ตอบกลับ AJAX (Fallback)
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'success'})
+
             return redirect('chat_room', room_id=room.id)
 
     messages = room.messages.all().order_by('timestamp')
@@ -74,3 +88,25 @@ def chat_list(request):
     return render(request, 'chat/list.html', {
         'rooms': rooms  # ✅ สำคัญ: ต้องตั้งชื่อ key ว่า 'rooms' ให้ตรงกับ list.html
     })
+
+@login_required
+def get_new_messages(request, room_id):
+    last_id = request.GET.get('last_id', 0)
+    
+    new_messages = Message.objects.filter(
+        room_id=room_id, 
+        id__gt=last_id
+    ).order_by('timestamp')
+    
+    data = []
+    for msg in new_messages:
+        data.append({
+            'id': msg.id,
+            'sender_id': msg.sender.id,
+            'content': msg.content,
+            'image_url': msg.image.url if msg.image else None,
+            'timestamp': msg.timestamp.strftime('%H:%M'),
+            'sender_avatar': msg.sender_avatar_url # ใช้ Property ที่แก้ไปใน models
+        })
+        
+    return JsonResponse({'messages': data})

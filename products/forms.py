@@ -1,7 +1,7 @@
 # products/forms.py
 
 from django import forms
-from .models import Product, Category, UserProfile, Review
+from .models import Product, Category, UserProfile, Review, VerificationRequest
 from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
@@ -130,3 +130,39 @@ class ProfileUpdateForm(forms.ModelForm):
             'bio': forms.Textarea(attrs={'class': 'form-textarea w-full rounded-lg border-2', 'rows': 4}),
             'avatar': forms.FileInput(attrs={'class': 'file-input w-full border border-2 rounded-lg'}),
         }
+
+class VerificationForm(forms.ModelForm):
+    class Meta:
+        model = VerificationRequest
+        fields = ['student_card_image']
+        widgets = {
+            'student_card_image': forms.FileInput(attrs={
+                'class': 'block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100'
+            })
+        }
+
+class UBURegisterForm(UserCreationForm):
+    first_name = forms.CharField(label="ชื่อจริง", max_length=30, required=True, widget=forms.TextInput(attrs={'placeholder': 'สมชาย'}))
+    last_name = forms.CharField(label="นามสกุล", max_length=30, required=True, widget=forms.TextInput(attrs={'placeholder': 'ใจดี'}))
+    email = forms.EmailField(label="อีเมลมหาวิทยาลัย (@ubu.ac.th)", required=True, widget=forms.EmailInput(attrs={'placeholder': 'xxxxxxxx@ubu.ac.th'}))
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email']
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and not email.endswith('@ubu.ac.th'):
+            raise ValidationError("กรุณาใช้อีเมล @ubu.ac.th เท่านั้น")
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("อีเมลนี้ถูกใช้งานแล้ว")
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        user.email = self.cleaned_data['email']
+        if commit:
+            user.save()
+        return user

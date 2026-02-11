@@ -58,9 +58,24 @@
                                             
                                             <div class="min-w-0 flex flex-col justify-center">
                                                 <span class="text-[10px] text-gray-400 leading-none mb-0.5">สินค้า</span>
-                                                <span class="text-gray-700 text-xs font-bold truncate block max-w-[120px]">
+                                                
+                                                <p class="text-sm text-gray-700 font-bold truncate max-w-[140px]" title="{{ room.product.name }}">
                                                     {{ room.product.name }}
-                                                </span>
+                                                </p>
+
+                                                {% if request.user == room.seller %}
+                                                    <div class="mt-0.5">
+                                                        {% if room.queue_sequence == 1 %}
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800 border border-green-200">
+                                                                🏆 คิวแรก
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                                                คิวที่ {{ room.queue_sequence }}
+                                                            </span>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
                                             </div>
                                         </div>
                                         

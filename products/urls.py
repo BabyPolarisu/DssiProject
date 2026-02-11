@@ -8,7 +8,7 @@ urlpatterns = [
     path('my-listings/', views.my_listings, name='my_listings'),
     path('accounts/', include('allauth.urls')),
 
-    path('product/new/', views.product_create, name='product_create'),
+    path('products/create/', views.product_create, name='product_create'),
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
     path('product/<int:pk>/edit/', views.product_update, name='product_update'),
     path('product/<int:pk>/delete/', views.product_delete, name='product_delete'),
@@ -30,5 +30,14 @@ urlpatterns = [
     path('wishlist/', views.wishlist, name='wishlist'),
 
     path('product/<int:pk>/mark-sold/', views.mark_as_sold, name='mark_as_sold'),
+
+    # path('report/', views.report_issue, name='report_issue'),
+    path('report/', views.report_page, name='report_page'),
+    path('my-reports/', views.my_reports, name='my_reports'),
+
+    path('verify/', views.verify_identity, name='verify_identity'),
+    # path('chat/start/<int:seller_id>/', views.start_chat, name='start_chat'),
+    # path('chat/<int:room_id>/', views.chat_room, name='chat_room'),
+    path('notifications/', views.notifications_view, name='notifications'),
     
 ]

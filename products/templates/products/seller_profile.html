@@ -144,15 +144,19 @@
                     </div>
 
                     <div class="mb-3">
-                        <textarea name="comment" rows="3" required placeholder="บริการเป็นอย่างไร? สินค้าตรงปกไหม?" class="w-full text-sm rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white"></textarea>
+                        <textarea name="comment" rows="3" required placeholder="บริการเป็นอย่างไร? สินค้าตรงปกไหม?" class="w-full text-sm rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white"></textarea>                        
                     </div>
 
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-200 shadow-sm">
                         ส่งรีวิว
-                    </button>
+                    </button>                         
                 </form>
             </div>
             {% endif %}
+
+            <button onclick="openReportModal('user', '{{ seller.id }}')" class="text-black-400 hover:text-red-500 text-xs border border-gray-200 px-3 py-1 rounded-full">
+                🚫 รายงานผู้ใช้นี้
+            </button> 
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 max-h-[600px] overflow-y-auto space-y-4 custom-scrollbar">
                 {% if reviews %}

@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-12">
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
+        
+        <div class="bg-red-50 px-8 py-6 border-b-2 border-red-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-red-700 flex items-center gap-3">
+                    🚨 ศูนย์แจ้งปัญหาและร้องเรียน
+                </h1>
+                <p class="text-red-600 mt-2 text-sm opacity-80">
+                    ข้อมูลของคุณจะถูกส่งตรงถึงผู้ดูแลระบบเพื่อทำการตรวจสอบ
+                </p>
+            </div>
+            
+            <a href="{% url 'my_reports' %}" class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-red-100 rounded-lg text-red-600 text-sm font-bold hover:bg-red-50 hover:border-red-200 transition shadow-sm">
+                🕒 ดูประวัติของฉัน
+            </a>
+        </div>
+
+        <div class="p-8">
+            <form method="POST" enctype="multipart/form-data" class="space-y-6" id="reportForm">
+                {% csrf_token %}
+
+                {% if target_product %}
+                    <div class="bg-gray-50 p-4 rounded-lg border-2 border-gray-200 flex items-center gap-4">
+                        {% if target_product.image %}
+                            <img src="{{ target_product.image.url }}" class="w-16 h-16 object-cover rounded-md border border-gray-300">
+                        {% endif %}
+                        <div>
+                            <span class="text-xs font-bold text-gray-500 uppercase">คุณกำลังรายงานสินค้า:</span>
+                            <h3 class="font-bold text-gray-800">{{ target_product.name }}</h3>
+                            <p class="text-sm text-gray-600">โดย: {{ target_product.seller.username }}</p>
+                        </div>
+                    </div>
+                {% elif target_user %}
+                    <div class="bg-gray-50 p-4 rounded-lg border-2 border-gray-200 flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-xl">👤</div>
+                        <div>
+                            <span class="text-xs font-bold text-gray-500 uppercase">คุณกำลังรายงานผู้ใช้:</span>
+                            <h3 class="font-bold text-gray-800">{{ target_user.username }}</h3>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        ชื่อผู้แจ้ง / เบอร์ติดต่อ (ไม่บังคับ)
+                    </label>
+                    <input type="text" name="contact_info" 
+                        placeholder="ระบุชื่อ หรือเบอร์โทรศัพท์ (ถ้ามี)"
+                        class="w-full rounded-lg border-2 border-gray-400 focus:border-red-600 focus:ring-0 px-4 py-3 bg-gray-50">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">หัวข้อปัญหา <span class="text-red-500">*</span></label>
+                    <select name="reason" required 
+                        class="w-full rounded-lg border-2 border-gray-400 focus:border-red-600 focus:ring-0 px-4 py-3 bg-white">
+                        <option value="" disabled selected>-- กรุณาเลือกหัวข้อ --</option>
+                        <option value="bug">🐛 เว็บไซต์มีปัญหา / บั๊ก</option>
+                        <option value="fraud">💸 ฉ้อโกง / หลอกลวง</option>
+                        <option value="fake">❌ สินค้าปลอม / ลอกเลียนแบบ</option>
+                        <option value="harassment">🤬 คำหยาบคาย / คุกคาม</option>
+                        <option value="spam">📢 สแปม / โฆษณา</option>
+                        <option value="other">📝 อื่นๆ</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">รายละเอียดเพิ่มเติม <span class="text-red-500">*</span></label>
+                    <textarea name="details" rows="5" required 
+                        placeholder="โปรดอธิบายปัญหาที่พบให้ชัดเจน..." 
+                        class="w-full rounded-lg border-2 border-gray-400 focus:border-red-600 focus:ring-0 px-4 py-3 bg-white"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        หลักฐานประกอบ (สูงสุด 6 รูป)
+                    </label>
+                    
+                    <div class="border-2 border-dashed border-gray-400 rounded-xl bg-gray-50 p-6 text-center hover:bg-gray-100 transition relative cursor-pointer" 
+                         onclick="document.getElementById('fileSelectTrigger').click()">
+                        
+                        <input type="file" id="fileSelectTrigger" multiple accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                        
+                        <input type="file" id="submissionInput" name="evidence_images" multiple class="hidden">
+                        
+                        <div class="space-y-2 pointer-events-none">
+                            <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="text-sm text-gray-600">
+                                <span class="font-medium text-red-600">คลิกเพื่อเลือกรูป</span> หรือลากไฟล์มาวาง
+                            </div>
+                            <p class="text-xs text-gray-500">เลือกได้ทีละหลายรูป (รวมไม่เกิน 6 รูป)</p>
+                        </div>
+                    </div>
+
+                    <div id="previewContainer" class="grid grid-cols-3 gap-4 mt-4">
+                        </div>
+                    
+                    <p id="imageCountText" class="text-sm text-gray-500 mt-2 text-right">0 / 6 รูป</p>
+                </div>
+
+                <div class="pt-4 flex gap-4">
+                    <a href="javascript:history.back()" class="flex-1 py-3 text-center border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 font-bold transition">
+                        ยกเลิก
+                    </a>
+                    
+                    <button type="submit" id="submitBtn" class="flex-1 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 font-bold shadow-lg border-2 border-red-600 transition transform hover:-translate-y-0.5">
+                        ส่งเรื่องรายงาน
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let accumulatedFiles = [];
+    const MAX_FILES = 6;
+
+    function handleFileSelect(event) {
+        // รับค่าจาก Input ตัว Trigger
+        const input = event.target;
+        const newFiles = Array.from(input.files);
+
+        if (accumulatedFiles.length + newFiles.length > MAX_FILES) {
+            alert(`คุณเลือกรูปเกินกำหนด! (สูงสุด ${MAX_FILES} รูป)`);
+            input.value = ''; 
+            return;
+        }
+
+        accumulatedFiles = accumulatedFiles.concat(newFiles);
+        
+        updateUI();
+        updateInputFiles(); // เรียกฟังก์ชันยัดไฟล์ใส่ตัวจริง
+        
+        // เคลียร์ค่า input ตัว Trigger ได้อย่างปลอดภัย ไม่กระทบตัวจริง
+        input.value = '';
+    }
+
+    function removeFile(index) {
+        accumulatedFiles.splice(index, 1);
+        updateUI();
+        updateInputFiles();
+    }
+
+    function updateUI() {
+        const container = document.getElementById('previewContainer');
+        const countText = document.getElementById('imageCountText');
+        container.innerHTML = '';
+
+        accumulatedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.className = 'relative group aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm';
+                div.innerHTML = `
+                    <img src="${e.target.result}" class="w-full h-full object-cover">
+                    <button type="button" onclick="removeFile(${index})" 
+                            class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 shadow-md transition transform hover:scale-110">
+                        ×
+                    </button>
+                `;
+                container.appendChild(div);
+            }
+            reader.readAsDataURL(file);
+        });
+        countText.innerText = `${accumulatedFiles.length} / ${MAX_FILES} รูป`;
+    }
+
+    function updateInputFiles() {
+        const dataTransfer = new DataTransfer();
+        accumulatedFiles.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+        
+        // ยัดไฟล์ใส่ Input ตัวจริง (#submissionInput) ที่มี name="evidence_images"
+        const submissionInput = document.getElementById('submissionInput');
+        submissionInput.files = dataTransfer.files;
+        
+        console.log("Files ready to send:", submissionInput.files);
+    }
+</script>
+{% endblock %}

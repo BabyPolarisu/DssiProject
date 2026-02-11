@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %} 
 
 {% block content %}
 <div class="max-w-4xl mx-auto my-10 px-4">
@@ -23,7 +24,7 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-10">
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white">
             <h2 class="text-3xl font-bold">แก้ไขข้อมูลส่วนตัว</h2>
             <p class="opacity-80">จัดการข้อมูลบัญชีและร้านค้าของคุณ</p>
@@ -61,17 +62,11 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อจริง <span class="text-red-500">*</span></label>
                             {{ u_form.first_name }}
-                            {% if u_form.first_name.errors %}
-                                <p class="text-red-500 text-xs mt-1">{{ u_form.first_name.errors.0 }}</p>
-                            {% endif %}
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">นามสกุล <span class="text-red-500">*</span></label>
                             {{ u_form.last_name }}
-                            {% if u_form.last_name.errors %}
-                                <p class="text-red-500 text-xs mt-1">{{ u_form.last_name.errors.0 }}</p>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -120,6 +115,71 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-gray-800 p-6 text-white flex justify-between items-center">
+            <div>
+                <h2 class="text-2xl font-bold">ความน่าเชื่อถือของฉัน</h2>
+                <p class="opacity-70 text-sm">รีวิวจากผู้ใช้คนอื่นที่มีต่อคุณ</p>
+            </div>
+            <div class="text-right">
+                <div class="text-3xl font-bold text-yellow-400 flex items-center justify-end gap-2">
+                    {{ avg_rating }} <span class="text-lg text-gray-400">/ 5.0</span>
+                </div>
+                <div class="text-sm opacity-70">{{ review_count }} รีวิวทั้งหมด</div>
+            </div>
+        </div>
+
+        <div class="p-6 bg-gray-50">
+            {% if received_reviews %}
+                <div class="space-y-4">
+                    {% for review in received_reviews %}
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex gap-4">
+                        <div class="flex-shrink-0">
+                            {% if review.reviewer.profile.avatar %}
+                                <img src="{{ review.reviewer.profile.avatar.url }}" class="w-10 h-10 rounded-full object-cover">
+                            {% else %}
+                                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
+                                    {{ review.reviewer.username.0|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 text-sm">{{ review.reviewer.get_full_name|default:review.reviewer.username }}</h4>
+                                    <div class="flex text-yellow-400 text-xs mt-0.5">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= review.rating %}
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                            {% else %}
+                                                <svg class="w-4 h-4 text-gray-200" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <span class="text-xs text-gray-400">{{ review.created_at|date:"d M Y" }}</span>
+                            </div>
+                            
+                            <p class="text-gray-600 text-sm mt-2 bg-gray-50 p-2 rounded-lg">
+                                "{{ review.comment|default:'ไม่ได้ระบุข้อความ' }}"
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-10">
+                    <div class="text-gray-300 mb-2">
+                        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+                    </div>
+                    <p class="text-gray-500">ยังไม่มีรีวิว</p>
+                    <p class="text-gray-400 text-sm">เมื่อมีการซื้อขายสำเร็จ ลูกค้าจะสามารถรีวิวให้คุณได้</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>
