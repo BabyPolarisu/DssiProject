@@ -32,6 +32,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost',
     'http://127.0.0.1',
     'https://plainly-famous-ray.ngrok-free.app'
+    'https://unimarket-en01.onrender.com'
 ]
 
 
