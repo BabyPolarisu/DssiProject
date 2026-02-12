@@ -1,0 +1,126 @@
+{% comment %} {% if messages %}
+    {% for message in messages %}
+        <div class="p-4 mb-4 text-sm rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}" role="alert">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %} {% endcomment %}
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}UniMarket{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    {% include 'partials/header.html' %}
+
+    <main class="py-8">
+        <div class="container mx-auto px-4">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+
+<div id="reportModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
+        
+        <div class="bg-red-50 px-6 py-4 border-b border-red-100 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-red-700 flex items-center gap-2">
+                🚨 แจ้งปัญหา / รายงาน
+            </h3>
+            <button onclick="closeReportModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+
+        <form action="{% url 'report_page' %}" method="POST" class="p-6">
+            {% csrf_token %}
+            
+            <input type="hidden" name="product_id" id="report_product_id">
+            <input type="hidden" name="user_id" id="report_user_id">
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">หัวข้อปัญหา</label>
+                    <select name="reason" required class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm">
+                        <option value="bug">🐛 เว็บไซต์มีปัญหา / บั๊ก</option>
+                        <option value="spam">📢 สแปม / โฆษณา</option>
+                        <option value="fake">❌ สินค้าปลอม</option>
+                        <option value="fraud">💸 ฉ้อโกง / หลอกลวง</option>
+                        <option value="harassment">🤬 คำหยาบคาย / คุกคาม</option>
+                        <option value="other">📝 อื่นๆ</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">รายละเอียดเพิ่มเติม</label>
+                    <textarea name="details" rows="3" required placeholder="โปรดระบุรายละเอียด..." class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm"></textarea>
+                </div>
+            </div>
+
+            <div class="mt-6 flex gap-3">
+                <button type="button" onclick="closeReportModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 shadow-sm text-sm">
+                    ส่งรายงาน
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+
+    {% if messages %}
+        {% for message in messages %}
+            Swal.fire({
+                icon: '{{ message.tags }}' === 'error' ? 'error' : 'success', // ถ้า error ให้โชว์กากบาท ถ้า success ให้โชว์ติ๊กถูก
+                title: '{{ message.tags }}' === 'error' ? 'เกิดข้อผิดพลาด' : 'สำเร็จ!',
+                text: '{{ message }}',
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'ตกลง',
+                timer: 3000, // ปิดเองใน 3 วิ
+                timerProgressBar: true
+            });
+        {% endfor %}
+    {% endif %}
+    
+    function openReportModal(type, id = null) {
+        const modal = document.getElementById('reportModal');
+        const productInput = document.getElementById('report_product_id');
+        const userInput = document.getElementById('report_user_id');
+
+        // รีเซ็ตค่าเก่าก่อน
+        productInput.value = '';
+        userInput.value = '';
+
+        // ตั้งค่าใหม่ตามปุ่มที่กดมา
+        if (type === 'product') {
+            productInput.value = id;
+        } else if (type === 'user') {
+            userInput.value = id;
+        }
+        // ถ้า type === 'general' ไม่ต้องเซ็ต ID อะไร (แจ้งเว็บพัง)
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeReportModal() {
+        document.getElementById('reportModal').classList.add('hidden');
+    }
+</script>
+
+</body>
+</html>

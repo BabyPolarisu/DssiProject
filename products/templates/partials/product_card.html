@@ -1,0 +1,61 @@
+{% load humanize %}
+{% load static %}
+
+<div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden group flex flex-col h-full relative">
+    
+    <a href="{% url 'product_detail' product.pk %}" class="block relative pt-[100%] overflow-hidden bg-gray-100">
+        {% if product.image %}
+            <img src="{{ product.image.url }}" 
+                 alt="{{ product.name }}" 
+                 class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+        {% else %}
+            <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-400">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </div>
+        {% endif %}
+
+        <div class="absolute top-2 right-2">
+            {% if product.condition == 'new' %}
+                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-200 shadow-sm">✨ มือหนึ่ง</span>
+            {% else %}
+                <span class="bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-200 shadow-sm">📦 มือสอง</span>
+            {% endif %}
+        </div>
+    </a>
+
+    <div class="p-4 flex flex-col flex-grow">
+        <h3 class="font-bold text-gray-800 text-lg mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
+            <a href="{% url 'product_detail' product.pk %}">{{ product.name }}</a>
+        </h3>
+        
+        <p class="text-gray-500 text-sm mb-3 line-clamp-2 h-10">{{ product.description }}</p>
+
+        <div class="mt-auto">
+             <div class="text-xl font-bold text-blue-600 mb-3">฿{{ product.price|intcomma }}</div>
+
+            <div class="flex items-center justify-between border-t border-gray-100 pt-3">
+                <a href="{% url 'seller_profile' product.seller.pk %}" class="flex items-center gap-2 group/seller hover:bg-gray-50 pr-2 rounded-full transition-colors">
+                    
+                    <div class="relative w-8 h-8">
+                        {% if product.seller.profile.avatar %}
+                            <img src="{{ product.seller.profile.avatar.url }}" 
+                                 class="w-8 h-8 rounded-full object-cover border border-gray-200 group-hover/seller:border-blue-300">
+                        {% else %}
+                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
+                                {{ product.seller.username|make_list|first|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <span class="text-xs text-gray-600 font-medium group-hover/seller:text-blue-600 truncate max-w-[80px]">
+                        {{ product.seller.profile.display_name|default:product.seller.username }}
+                    </span>
+                </a>
+
+                <div class="text-xs text-gray-400">
+                    {{ product.created_at|timesince }} ที่แล้ว
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

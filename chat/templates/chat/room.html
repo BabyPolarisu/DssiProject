@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto my-6 sm:my-10 bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col h-[85vh] border border-gray-100">
+    
+    <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-3 sm:p-4 flex items-center justify-between text-white shadow-md z-10">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'chat_list' %}" class="p-2 -ml-2 rounded-full hover:bg-white/20 transition text-white/90 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </a>
+
+            <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-white border border-white/30">
+                {% if room.product.image %}
+                    <img src="{{ room.product.image.url }}" class="w-full h-full object-cover">
+                {% else %}
+                    <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="overflow-hidden">
+                <h2 class="font-bold text-base leading-tight truncate max-w-[200px] text-white">
+                    {{ room.product.name }}
+                </h2>
+                <div class="flex items-center gap-1 text-xs text-blue-100 mt-0.5 font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                    </svg>
+                    <span>
+                        {% if request.user == room.buyer %}
+                            {{ room.seller.get_full_name|default:room.seller.username }} (ผู้ขาย)
+                        {% else %}
+                            {{ room.buyer.get_full_name|default:room.buyer.username }} (ลูกค้า)
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-right hidden sm:block">
+            <span class="block font-bold text-lg text-white">฿{{ room.product.price|intcomma }}</span>
+        </div>
+    </div>
+
+    <div id="chat-log" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 scroll-smooth">
+        {% for message in messages %}
+        <div class="flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %} items-end gap-2 group mb-4" data-msg-id="{{ message.id }}">
+            
+            {% if message.sender != request.user %}
+                <img src="{{ message.sender_avatar_url }}" class="w-8 h-8 rounded-full border border-gray-300 shadow-sm mb-1 object-cover">
+            {% endif %}
+
+            <div class="flex flex-col {% if message.sender == request.user %}items-end{% else %}items-start{% endif %} max-w-[75%]">
+                {% if message.image %}
+                    <div class="mb-1 overflow-hidden rounded-xl shadow-sm border border-gray-100 bg-white">
+                        <img src="{{ message.image.url }}" class="max-w-full h-auto object-cover block">
+                    </div>
+                {% endif %}
+
+                {% if message.content %}
+                    <div class="px-4 py-2 rounded-2xl shadow-sm text-sm break-words relative 
+                        {% if message.sender == request.user %}
+                            bg-blue-600 text-white rounded-br-none
+                        {% else %}
+                            bg-white text-gray-800 border border-gray-200 rounded-bl-none
+                        {% endif %}">
+                        <p class="leading-relaxed">{{ message.content }}</p>
+                    </div>
+                {% endif %}
+                <span class="text-[10px] text-gray-400 mt-1 px-1">{{ message.timestamp|date:"H:i" }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="image-preview-container" class="hidden px-4 py-2 bg-gray-50 border-t border-gray-100 flex items-center gap-3 animate-fade-in-up">
+        <div class="relative group">
+            <img id="image-preview" src="" class="h-20 w-auto rounded-lg border border-gray-300 shadow-sm object-cover">
+            <button type="button" onclick="clearImage()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition transform hover:scale-110">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+        <span class="text-xs text-gray-500 font-medium">รูปภาพที่เลือก</span>
+    </div>
+
+    <div class="bg-gray-50 border-t border-gray-100 px-4 py-2 flex gap-2 overflow-x-auto no-scrollbar">
+        <button onclick="sendQuickMessage('สินค้ายังอยู่ไหม?')" class="whitespace-nowrap px-3 py-1 bg-white border border-gray-200 rounded-full text-xs text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition shadow-sm">สินค้ายังอยู่ไหม?</button>
+        <button onclick="sendQuickMessage('ลดราคาได้ไหม?')" class="whitespace-nowrap px-3 py-1 bg-white border border-gray-200 rounded-full text-xs text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition shadow-sm">ลดได้ไหม?</button>
+        <button onclick="sendQuickMessage('ขอดูรูปเพิ่มเติมหน่อย')" class="whitespace-nowrap px-3 py-1 bg-white border border-gray-200 rounded-full text-xs text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition shadow-sm">ขอดูรูปเพิ่ม</button>
+        <button onclick="sendQuickMessage('นัดรับได้ที่ไหนบ้าง?')" class="whitespace-nowrap px-3 py-1 bg-white border border-gray-200 rounded-full text-xs text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition shadow-sm">พร้อมโอน</button>
+    </div>
+
+    <div class="p-3 sm:p-4 bg-white border-t border-gray-100 shadow-inner z-20">
+        <form id="chat-form" enctype="multipart/form-data" class="flex items-center gap-2">
+            {% csrf_token %}
+            
+            <label class="cursor-pointer p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition relative group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <input type="file" name="image" id="image-input" class="hidden" accept="image/*" onchange="previewImage(this)">
+            </label>
+
+            <input type="text" name="content" id="chat-message-input" autocomplete="off"
+                class="flex-1 bg-gray-100 border-0 rounded-full px-5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm placeholder-gray-400"
+                placeholder="พิมพ์ข้อความ...">
+
+            <button type="submit" class="bg-blue-600 text-white p-2.5 rounded-full hover:bg-blue-700 shadow-lg shadow-blue-200 transition transform hover:scale-105 active:scale-95 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const roomId = "{{ room.id }}";
+    const currentUserId = {{ request.user.id }};
+    const chatLog = document.getElementById('chat-log');
+    
+    chatLog.scrollTop = chatLog.scrollHeight;
+
+    // --- ส่วนที่เพิ่มใหม่: Logic สำหรับ Preview Image ---
+    function previewImage(input) {
+        const previewContainer = document.getElementById('image-preview-container');
+        const previewImage = document.getElementById('image-preview');
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                previewContainer.classList.remove('hidden'); // แสดงกล่อง Preview
+            }
+            
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function clearImage() {
+        const input = document.getElementById('image-input');
+        const previewContainer = document.getElementById('image-preview-container');
+        
+        input.value = ""; // ล้างค่าใน Input File
+        previewContainer.classList.add('hidden'); // ซ่อนกล่อง Preview
+    }
+    // --------------------------------------------------
+
+    function sendQuickMessage(msg) {
+        document.getElementById('chat-message-input').value = msg;
+        document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+    }
+
+    function appendMessage(data) {
+        const isMe = data.sender_id === currentUserId;
+        if (document.querySelector(`[data-msg-id="${data.id}"]`)) return;
+
+        const div = document.createElement('div');
+        div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} items-end gap-2 group mb-4 animate-fade-in-up`;
+        div.setAttribute('data-msg-id', data.id);
+
+        let avatarHtml = !isMe ? `<img src="${data.sender_avatar}" class="w-8 h-8 rounded-full border border-gray-300 shadow-sm mb-1 object-cover">` : '';
+        
+        let imageHtml = '';
+        if (data.image_url) {
+            imageHtml = `
+                <div class="mb-1 overflow-hidden rounded-xl shadow-sm border border-gray-100 bg-white">
+                    <img src="${data.image_url}" class="max-w-full h-auto object-cover block">
+                </div>
+            `;
+        }
+
+        let contentHtml = '';
+        if (data.content) {
+            const bubbleClass = isMe 
+                ? 'bg-blue-600 text-white rounded-br-none' 
+                : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none';
+            
+            contentHtml = `
+                <div class="px-4 py-2 rounded-2xl shadow-sm text-sm break-words relative ${bubbleClass}">
+                    <p class="leading-relaxed">${data.content}</p>
+                </div>
+            `;
+        }
+
+        div.innerHTML = `
+            ${avatarHtml}
+            <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%]">
+                ${imageHtml}
+                ${contentHtml}
+                <span class="text-[10px] text-gray-400 mt-1 px-1">${data.timestamp}</span>
+            </div>
+        `;
+        chatLog.appendChild(div);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function fetchNewMessages() {
+        const lastMsgElement = chatLog.lastElementChild;
+        let lastId = 0;
+        if (lastMsgElement && lastMsgElement.getAttribute('data-msg-id')) {
+            lastId = lastMsgElement.getAttribute('data-msg-id');
+        }
+
+        fetch(`/chat/room/${roomId}/get_new/?last_id=${lastId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.messages.length > 0) {
+                    data.messages.forEach(msg => appendMessage(msg));
+                }
+            })
+            .catch(err => console.error(err));
+    }
+    setInterval(fetchNewMessages, 2000);
+
+    document.getElementById('chat-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const input = document.getElementById('chat-message-input');
+        
+        if (!input.value.trim() && !document.getElementById('image-input').files[0]) return;
+
+        fetch("", {
+            method: "POST",
+            body: formData,
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                form.reset();
+                clearImage(); // ✅ เมื่อส่งสำเร็จ ให้ล้างรูป Preview ออกด้วย
+                fetchNewMessages();
+            }
+        });
+    });
+</script>
+
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
+</style>
+{% endblock %}

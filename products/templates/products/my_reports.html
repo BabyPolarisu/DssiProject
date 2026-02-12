@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-12">
+    
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">📋 ประวัติการแจ้งปัญหา</h1>
+            <p class="text-gray-600">ติดตามสถานะคำร้องเรียนของคุณ</p>
+        </div>
+        <div class="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold">
+            แจ้งไปแล้ว {{ report_count }} รายการ
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-md border overflow-hidden">
+        {% if reports %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="px-6 py-4 font-bold text-gray-600">วันที่แจ้ง</th>
+                            <th class="px-6 py-4 font-bold text-gray-600">หัวข้อ</th>
+                            <th class="px-6 py-4 font-bold text-gray-600">แจ้งปัญหาเกี่ยวกับ</th>
+                            <th class="px-6 py-4 font-bold text-gray-600">สถานะ</th>
+                            <th class="px-6 py-4 font-bold text-gray-600">รายละเอียด</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        {% for report in reports %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                {{ report.created_at|date:"d M Y" }}<br>
+                                <span class="text-xs">{{ report.created_at|date:"H:i" }} น.</span>
+                            </td>
+
+                            <td class="px-6 py-4 font-medium text-gray-800">
+                                {{ report.get_reason_display }}
+                            </td>
+
+                            <td class="px-6 py-4 text-sm">
+                                {% if report.product %}
+                                    <a href="{% url 'product_detail' report.product.id %}" class="flex items-center gap-2 text-blue-600 hover:underline">
+                                        📦 {{ report.product.name|truncatechars:20 }}
+                                    </a>
+                                {% elif report.reported_user %}
+                                    <span class="flex items-center gap-2 text-gray-700">
+                                        👤 {{ report.reported_user.username }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-gray-400">🌐 ระบบทั่วไป</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="px-6 py-4">
+                                {% if report.status == 'pending' %}
+                                    <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold">⏳ รอตรวจสอบ</span>
+                                {% elif report.status == 'investigating' %}
+                                    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">🔍 กำลังตรวจสอบ</span>
+                                {% elif report.status == 'resolved' %}
+                                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">✅ แก้ไขแล้ว</span>
+                                {% elif report.status == 'ignored' %}
+                                    <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold">❌ ปฏิเสธ</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                {{ report.details|truncatechars:30 }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="text-5xl mb-4">✨</div>
+                <h3 class="text-lg font-bold text-gray-700">ยังไม่มีประวัติการแจ้งปัญหา</h3>
+                <p class="text-gray-500">คุณยังไม่เคยส่งคำร้องเรียนใดๆ เข้ามา</p>
+                <a href="{% url 'home' %}" class="inline-block mt-4 text-red-600 font-bold hover:underline">กลับหน้าหลัก</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

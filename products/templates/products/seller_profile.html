@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+        <div class="h-32 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+
+        <div class="px-8 pb-8">
+            <div class="flex flex-col md:flex-row items-start gap-6">
+                
+                <div class="-mt-16 flex-shrink-0">
+                    <div class="w-32 h-32 rounded-full border-4 border-white shadow-md bg-white overflow-hidden">
+                        {% if seller.profile.avatar %}
+                            <img src="{{ seller.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full bg-gray-100 flex items-center justify-center text-4xl">👤</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex-1 mt-4 md:mt-2 w-full">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                                {{ seller.first_name }} {{ seller.last_name }}
+                                {% if seller.profile.display_name %}
+                                    <span class="text-gray-400 text-lg font-normal">(@{{ seller.profile.display_name }})</span>
+                                {% endif %}
+                            </h1>
+                            
+                            <div class="flex items-center gap-2 mt-1">
+                                <div class="flex text-yellow-400 text-lg">
+                                    {% for i in range_5 %}
+                                        {% if i <= avg_rating %}★{% else %}☆{% endif %}
+                                    {% endfor %}
+                                </div>
+                                <span class="font-bold text-gray-700">{{ avg_rating }}</span>
+                                <span class="text-gray-400 text-sm">({{ review_count }} รีวิว)</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100 min-w-[250px]">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">📧</span>
+                                <a href="mailto:{{ seller.email }}" class="hover:text-blue-600 font-medium truncate">{{ seller.email }}</a>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">📞</span>
+                                <span class="font-medium">
+                                    {{ seller.profile.phone_number|default:"ไม่ระบุเบอร์โทร" }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% if seller.profile.bio %}
+                            <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                                <h3 class="font-bold text-blue-800 text-sm mb-1">📝 เกี่ยวกับร้านค้า</h3>
+                                <p class="text-gray-700 text-sm leading-relaxed">{{ seller.profile.bio|linebreaksbr }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        {% if seller.profile.address %}
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                <h3 class="font-bold text-gray-800 text-sm mb-1">📍 ที่อยู่ / จุดนัดรับ</h3>
+                                <p class="text-gray-600 text-sm flex items-start gap-1">
+                                    {{ seller.profile.address }}
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="lg:col-span-2 space-y-6">
+            <h2 class="text-2xl font-bold flex items-center gap-2 text-gray-800 border-b pb-2">
+                📦 สินค้าที่วางขาย <span class="text-gray-400 text-lg font-normal">({{ selling_products.count }})</span>
+            </h2>
+
+            {% if selling_products %}
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {% for product in selling_products %}
+                    <a href="{% url 'product_detail' product.id %}" class="group bg-white rounded-xl shadow-sm hover:shadow-lg transition duration-200 border border-gray-100 overflow-hidden flex flex-col">
+                        <div class="aspect-w-1 aspect-h-1 w-full relative h-40 bg-gray-200 overflow-hidden">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-2xl">📷</div>
+                            {% endif %}
+                            
+                            <div class="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-bold px-2 py-1 rounded backdrop-blur-sm">
+                                ฿{{ product.price|intcomma }}
+                            </div>
+                        </div>
+                        <div class="p-3 flex-1 flex flex-col justify-between">
+                            <h3 class="text-sm font-medium text-gray-900 line-clamp-2 leading-snug group-hover:text-blue-600">
+                                {{ product.name }}
+                            </h3>
+                            <p class="text-xs text-gray-400 mt-2">{{ product.created_at|timesince }} ที่แล้ว</p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+                    <p class="text-gray-500">ผู้ขายรายนี้ยังไม่มีสินค้าวางจำหน่ายในขณะนี้</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="space-y-6">
+            <h2 class="text-xl font-bold flex items-center gap-2 text-gray-800 border-b pb-2">
+                ⭐ รีวิวจากลูกค้า <span class="text-gray-400 text-base font-normal">({{ review_count }})</span>
+            </h2>
+
+            {% if user.is_authenticated and user != seller %}
+            <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100 shadow-sm">
+                <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                    เขียนรีวิวให้ผู้ขาย
+                </h3>
+                
+                <form action="{% url 'add_review' seller.id %}" method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <select name="rating" required class="w-full text-sm rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white">
+                            <option value="" disabled selected>เลือกคะแนนความพึงพอใจ</option>
+                            <option value="5">★★★★★ (5 - ดีมาก)</option>
+                            <option value="4">★★★★☆ (4 - ดี)</option>
+                            <option value="3">★★★☆☆ (3 - ปานกลาง)</option>
+                            <option value="2">★★☆☆☆ (2 - พอใช้)</option>
+                            <option value="1">★☆☆☆☆ (1 - ปรับปรุง)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <textarea name="comment" rows="3" required placeholder="บริการเป็นอย่างไร? สินค้าตรงปกไหม?" class="w-full text-sm rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white"></textarea>                        
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-200 shadow-sm">
+                        ส่งรีวิว
+                    </button>                         
+                </form>
+            </div>
+            {% endif %}
+
+            <button onclick="openReportModal('user', '{{ seller.id }}')" class="text-black-400 hover:text-red-500 text-xs border border-gray-200 px-3 py-1 rounded-full">
+                🚫 รายงานผู้ใช้นี้
+            </button> 
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 max-h-[600px] overflow-y-auto space-y-4 custom-scrollbar">
+                {% if reviews %}
+                    {% for review in reviews %}
+                    <div class="border-b border-gray-50 pb-4 last:border-0 last:pb-0">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                                    {% if review.reviewer.profile.avatar %}
+                                        <img src="{{ review.reviewer.profile.avatar.url }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                        <div class="w-full h-full flex items-center justify-center text-xs">👤</div>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-gray-900 truncate max-w-[100px]">
+                                        {{ review.reviewer.profile.display_name|default:review.reviewer.username }}
+                                    </p>
+                                    <p class="text-[10px] text-gray-400">{{ review.created_at|date:"d/m/Y" }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex text-yellow-400 text-xs">
+                                {% for i in range_5 %}
+                                    {% if i <= review.rating %}★{% else %}☆{% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        {% if review.comment %}
+                            <div class="bg-gray-50 p-2 rounded-lg text-xs text-gray-600 leading-relaxed">
+                                "{{ review.comment }}"
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-8 text-gray-400">
+                        <div class="text-4xl mb-2 opacity-30">💬</div>
+                        <p class="text-sm">ยังไม่มีรีวิวสำหรับผู้ขายรายนี้</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+</style>
+
+{% endblock %}

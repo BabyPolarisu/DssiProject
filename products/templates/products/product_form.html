@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}แก้ไขสินค้า{% else %}ลงขายสิ่งของ{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-md border border-gray-100 my-8">
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.errors %}
+            <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 flex items-center gap-2" role="alert">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div>
+                    <strong class="font-bold">เกิดข้อผิดพลาด!</strong>
+                    <span class="block sm:inline">กรุณาตรวจสอบข้อมูลที่กรอกอีกครั้ง</span>
+                    {{ form.non_field_errors }}
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="mb-8 border-b border-gray-100 pb-4">
+            <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                {% if form.instance.pk %}
+                    ✏️ แก้ไขข้อมูลสินค้า
+                {% else %}
+                    📢 ลงขายสิ่งของ
+                {% endif %}
+            </h1>
+            <p class="text-gray-500 mt-1">กรอกข้อมูลสินค้าของคุณให้ครบถ้วน เพื่อให้ผู้ซื้อตัดสินใจได้ง่ายขึ้น</p>
+        </div>
+
+        <div class="mb-8">
+            <label class="block text-sm font-bold text-gray-700 mb-2">รูปสินค้า <span class="text-red-500">*</span></label>
+            
+            <div class="relative w-full h-80 border-2 border-dashed border-gray-300 rounded-xl hover:bg-gray-50 transition flex flex-col items-center justify-center cursor-pointer group bg-gray-50 overflow-hidden">
+                <input type="file" name="image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="previewImage(event, 'image-preview', 'upload-placeholder')">
+                
+                <div id="upload-placeholder" class="text-center {% if form.instance.image %}hidden{% endif %}">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <p class="text-sm font-medium text-gray-700">คลิกเพื่ออัปโหลดรูปภาพ</p>
+                    <p class="text-xs text-gray-400 mt-1">PNG, JPG, GIF สูงสุด 5MB</p>
+                </div>
+
+                <img id="image-preview" src="{% if form.instance.image %}{{ form.instance.image.url }}{% endif %}" class="absolute inset-0 w-full h-full object-contain bg-white {% if not form.instance.image %}hidden{% endif %}">
+            </div>
+            <div class="text-red-500 text-sm mt-1">{{ form.image.errors }}</div>
+        </div>
+
+        <div class="mb-6">
+             <label class="block text-sm font-bold text-gray-700 mb-2">ชื่อสินค้า <span class="text-red-500">*</span></label>
+             <input type="text" name="name" value="{{ form.name.value|default:'' }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="เช่น หนังสือ Calculus 1, iPad Gen 9" required>
+             <div class="text-red-500 text-sm mt-1">{{ form.name.errors }}</div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">หมวดหมู่ <span class="text-red-500">*</span></label>
+                <select name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none cursor-pointer" required>
+                    <option value="">-- เลือกหมวดหมู่ --</option>
+                    
+                    {% for value, label in form.fields.category.choices %}
+                        {% if value %} <option value="{{ value }}" {% if form.category.value == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <div class="text-red-500 text-sm mt-1">{{ form.category.errors }}</div>
+            </div>
+
+            <div>
+                 <label class="block text-sm font-bold text-gray-700 mb-2">สภาพสินค้า <span class="text-red-500">*</span></label>
+                 <select name="condition" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none cursor-pointer" required>
+                    <option value="">-- เลือกสภาพสินค้า --</option>
+                    <option value="new" {% if form.condition.value == "new" %}selected{% endif %}>✨ มือหนึ่ง (New)</option>
+                    <option value="used" {% if form.condition.value == "used" %}selected{% endif %}>📦 มือสอง (Used)</option>
+                 </select>
+                 <div class="text-red-500 text-sm mt-1">{{ form.condition.errors }}</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                 <label class="block text-sm font-bold text-gray-700 mb-2">ราคา (บาท) <span class="text-red-500">*</span></label>
+                 <div class="relative">
+                     <span class="absolute left-3 top-2 text-gray-500">฿</span>
+                     <input type="number" name="price" value="{{ form.price.value|default:'' }}" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="0" required>
+                 </div>
+                 <div class="text-red-500 text-sm mt-1">{{ form.price.errors }}</div>
+            </div>
+        </div>
+
+        <div class="mb-8">
+             <label class="block text-sm font-bold text-gray-700 mb-2">รายละเอียดเพิ่มเติม <span class="text-red-500">*</span></label>
+             <textarea name="description" rows="5" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="อธิบายสภาพสินค้า ตำหนิ หรือข้อมูลอื่นๆ...">{{ form.description.value|default:'' }}</textarea>
+             <div class="text-red-500 text-sm mt-1">{{ form.description.errors }}</div>
+        </div>
+        
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-4 border-t border-gray-100 pt-6">
+            <a href="{% url 'my_listings' %}" class="text-center bg-white py-2.5 px-6 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 transition">
+                ยกเลิก
+            </a>
+            <button type="submit" class="bg-blue-600 py-2.5 px-8 rounded-lg text-sm font-bold text-white hover:bg-blue-700 shadow-md shadow-blue-200 transition flex items-center justify-center gap-2">
+                {% if form.instance.pk %}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    บันทึกการเปลี่ยนแปลง
+                {% else %}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    ลงขายสินค้า
+                {% endif %}
+            </button>
+        </div>
+    </form> 
+</div>
+
+<script>
+    function previewImage(event, imageId, placeholderId) {
+        const input = event.target;
+        const preview = document.getElementById(imageId);
+        const placeholder = document.getElementById(placeholderId);
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden'); // โชว์รูป
+                placeholder.classList.add('hidden'); // ซ่อนข้อความ
+            }
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}ลงขายสินค้าสำเร็จ{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center">
+    <div class="bg-white p-10 rounded-2xl shadow-lg text-center max-w-md w-full border border-gray-100">
+        
+        <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-10 h-10 text-yellow-600">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+        </div>
+
+        <h1 class="text-2xl font-bold text-gray-800 mb-3">ได้รับข้อมูลแล้ว!</h1>
+        <p class="text-lg font-medium text-gray-600 mb-2">โปรดรอการอนุมัติสินค้าของคุณ</p>
+        <p class="text-sm text-gray-500 mb-8 leading-relaxed">
+            ระบบได้รับข้อมูลการลงขายเรียบร้อยแล้ว <br>
+            ทีมงานจะทำการตรวจสอบความถูกต้องภายใน 24 ชั่วโมง <br>
+            คุณสามารถตรวจสอบสถานะได้ที่เมนู "สินค้าของฉัน"
+        </p>
+
+        <div class="space-y-3">
+            <a href="{% url 'my_listings' %}" class="block w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-md shadow-blue-200">
+                ไปที่สินค้าของฉัน
+            </a>
+            <a href="{% url 'home' %}" class="block w-full py-3 px-4 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium rounded-xl transition">
+                กลับหน้าหลัก
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
