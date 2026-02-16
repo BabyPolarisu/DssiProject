@@ -31,8 +31,8 @@ ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost',
     'http://127.0.0.1',
-    'https://plainly-famous-ray.ngrok-free.app'
-    'https://unimarket-en01.onrender.com'
+    'https://plainly-famous-ray.ngrok-free.app',
+    'https://unimarket-en01.onrender.com',
 ]
 
 
@@ -58,19 +58,18 @@ INSTALLED_APPS = [
     'products',
     'channels',
     'chat',
-    
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'unimarket.urls'
@@ -116,25 +115,6 @@ else:
             'PORT': os.environ.get('SQL_PORT', '5432'),
         }
     }
-# if os.environ.get("DATABASE_URL") == "postgres":
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': os.environ.get("SQL_DATABASE", "unimarket_db"),
-#             'USER': os.environ.get("SQL_USER", "unimarket_user"),
-#             'PASSWORD': os.environ.get("SQL_PASSWORD", "password"),
-#             'HOST': os.environ.get("SQL_HOST", "db"),
-#             'PORT': '5432',
-#         }
-#     }
-# else:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': BASE_DIR / 'db.sqlite3',
-#         }
-#     }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -180,8 +160,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
-    'django.contrib.auth.backends.ModelBackend', # เพื่อให้ Admin ยัง Login แบบเดิมได้
-     # เพื่อให้ Login ผ่าน Social ได้
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 LOGIN_REDIRECT_URL = '/'
@@ -226,13 +205,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# # (Optional) ตั้งค่าเพิ่มเติมของ Allauth
-# ACCOUNT_EMAIL_REQUIRED = True
-# ACCOUNT_USERNAME_REQUIRED = False # ให้ใช้ Email เป็นหลักได้
-# ACCOUNT_AUTHENTICATION_METHOD = 'email'
-# ACCOUNT_EMAIL_VERIFICATION = 'optional' # หรือ 'mandatory' ถ้าบังคับยืนยันอีเมล
-
-# # (Optional) ตั้งค่า Google Provider (ถ้าต้องการจำกัดโดเมนมหาวิทยาลัย)
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [

@@ -31,13 +31,9 @@ urlpatterns = [
 
     path('product/<int:pk>/mark-sold/', views.mark_as_sold, name='mark_as_sold'),
 
-    # path('report/', views.report_issue, name='report_issue'),
     path('report/', views.report_page, name='report_page'),
     path('my-reports/', views.my_reports, name='my_reports'),
 
     path('verify/', views.verify_identity, name='verify_identity'),
-    # path('chat/start/<int:seller_id>/', views.start_chat, name='start_chat'),
-    # path('chat/<int:room_id>/', views.chat_room, name='chat_room'),
     path('notifications/', views.notifications_view, name='notifications'),
-    
 ]

@@ -1,3 +1,9 @@
 .env
 .git
 __pycache__
+*.pyc
+db.sqlite3
+node_modules
+media
+.dockerignore
+README.md
