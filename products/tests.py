@@ -23,11 +23,7 @@ class SocialAppMixin:
         )
         app.sites.add(site)
 
-
-# ==========================================
 # Model Tests
-# ==========================================
-
 class CategoryModelTest(TestCase):
     def test_str(self):
         cat = Category.objects.create(name="หนังสือเรียน", icon="📚")
@@ -164,11 +160,7 @@ class VerificationRequestModelTest(TestCase):
         )
         self.assertIn("verifuser", str(vr))
 
-
-# ==========================================
 # Form Tests
-# ==========================================
-
 class ProductFormTest(TestCase):
     def setUp(self):
         self.category = Category.objects.create(name="Books")
@@ -268,10 +260,7 @@ class ReviewFormTest(TestCase):
         self.assertFalse(form.is_valid())
 
 
-# ==========================================
 # View Tests (Public - No Auth Required)
-# ==========================================
-
 class HomeViewTest(SocialAppMixin, TestCase):
     def test_home_page_returns_200(self):
         response = self.client.get(reverse("home"))
@@ -443,10 +432,7 @@ class SellerProfileViewTest(SocialAppMixin, TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-# ==========================================
 # View Tests (Auth-Required - Expect Redirect)
-# ==========================================
-
 class AuthRequiredViewsTest(TestCase):
     """All login_required views should redirect anonymous users to login."""
 
@@ -483,10 +469,8 @@ class AuthRequiredViewsTest(TestCase):
         self.assertRedirectsToLogin(reverse("admin_dashboard"))
 
 
-# ==========================================
-# Context Processor Test
-# ==========================================
 
+# Context Processor Test
 class NotificationContextProcessorTest(SocialAppMixin, TestCase):
     def test_anonymous_no_count(self):
         response = self.client.get(reverse("home"))

@@ -52,7 +52,7 @@ class CustomUserCreationForm(UserCreationForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        # ✅ เพิ่ม 'display_name' เข้าไปในรายการ fields
+        # เพิ่ม 'display_name' เข้าไปในรายการ fields
         fields = ['display_name', 'phone_number', 'address', 'bio', 'avatar']
         
         widgets = {

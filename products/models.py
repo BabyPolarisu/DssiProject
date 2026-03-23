@@ -53,6 +53,9 @@ class Product(models.Model):
     favorites = models.ManyToManyField(User, related_name='favorite_products', blank=True, verbose_name="ผู้ที่กดถูกใจ")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # meeting_point = models.CharField(max_length=100, blank=True, null=True, verbose_name="จุดนัดรับ")
+    # view_count = models.PositiveIntegerField(default=0, verbose_name="จำนวนคนดู")
+    # is_reserved = models.BooleanField(default=False, verbose_name="ติดจอง")
 
     def __str__(self):
         return self.name

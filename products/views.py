@@ -9,9 +9,7 @@ from django.db.models import Avg, Q
 from .forms import ProductForm, CustomUserCreationForm, ProfileForm, ReviewForm, UBURegisterForm, UserUpdateForm, ProfileUpdateForm, VerificationForm
 from .models import Product, Category, UserProfile, Review, Report, ReportImage, VerificationRequest, Notification
 
-# ==========================================
-# 🏠 General Views
-# ==========================================
+# General Views
 
 def home(request):
     latest_products = Product.objects.filter(status='active').order_by('-created_at')[:8]
@@ -49,10 +47,14 @@ def product_list_all(request):
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
 
-    # ✅ Logic แก้ไข: ให้ Admin ดูสินค้า Pending ได้ด้วย (เพื่อกดอนุมัติ)
+    # แก้ไข: ให้ Admin ดูสินค้า Pending ได้ด้วย (เพื่อกดอนุมัติ)
     # ถ้าไม่ใช่ Active, ไม่ใช่คนขาย, และ "ไม่ใช่ Admin" -> เด้งกลับ
     if product.status != 'active' and product.seller != request.user and not request.user.is_superuser:
         return redirect('home')
+    
+    # if request.user != product.seller
+    #     product.view_count += 1
+    #     product.save()
 
     # สินค้าใกล้เคียง
     related_products = Product.objects.filter(
@@ -86,9 +88,7 @@ def register(request):
     
     return render(request, 'registration/register.html', {'form': form})
 
-# ==========================================
-# 🛍️ Product Management (CRUD)
-# ==========================================
+# Product Management (CRUD)
 
 @login_required
 def my_listings(request):
@@ -97,7 +97,6 @@ def my_listings(request):
 
 @login_required
 def product_create(request): 
-    # --- ✅ เพิ่ม Logic ตรวจสอบสิทธิ์ตรงนี้ ---
     verification = getattr(request.user, 'verification', None)
     
     if not verification or verification.status != 'approved':
@@ -107,7 +106,6 @@ def product_create(request):
     # --------------------------------------
 
     if request.method == 'POST':
-        # ... (โค้ดเดิมของคุณ) ...
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             product = form.save(commit=False)
@@ -167,9 +165,7 @@ def mark_as_sold(request, pk):
 def product_success(request):
     return render(request, 'products/product_success.html')
 
-# ==========================================
-# 👤 Profile & Reviews
-# ==========================================
+# Profile & Reviews
 
 @login_required
 def edit_profile(request):
@@ -248,9 +244,8 @@ def add_review(request, seller_id):
             
     return redirect('seller_profile', seller_id=seller_id)
 
-# ==========================================
-# ❤️ Favorites / Wishlist
-# ==========================================
+
+# Favorites / Wishlist
 
 @login_required
 def toggle_favorite(request, product_id):
@@ -268,9 +263,7 @@ def wishlist(request):
     products = request.user.favorite_products.filter(status='active').order_by('-created_at')
     return render(request, 'products/wishlist.html', {'products': products})
 
-# ==========================================
-# 🚨 Reports (System with Images)
-# ==========================================
+# Reports (System with Images)
 
 @login_required
 def report_page(request):
@@ -298,7 +291,7 @@ def report_page(request):
             messages.error(request, "คุณสามารถแนบรูปได้สูงสุด 6 รูปเท่านั้น")
             return redirect(request.path)
         
-        # 1. สร้าง Report
+        # สร้าง Report
         report = Report.objects.create(
             reporter=request.user,
             reason=reason,
@@ -332,9 +325,8 @@ def my_reports(request):
     }
     return render(request, 'products/my_reports.html', context)
 
-# ==========================================
-# 🛠️ Admin Dashboard
-# ==========================================
+# Admin Dashboard
+
 
 def is_superuser(user):
     return user.is_superuser
@@ -428,7 +420,7 @@ def verify_identity(request):
         'existing_req': existing_req
     })
 
-# --- 2. ระบบแชท (แบบ Real-time Polling) ---
+#  ระบบแชท (แบบ Real-time Polling)
 @login_required
 def start_chat(request, seller_id):
     other_user = get_object_or_404(User, pk=seller_id)
@@ -469,7 +461,7 @@ def chat_room(request, room_id):
         'messages': messages_list
     })
 
-# --- 3. ระบบแจ้งเตือน ---
+# ระบบแจ้งเตือน 
 @login_required
 def notifications_view(request):
     # ดึงแจ้งเตือนทั้งหมดของฉัน (ใหม่สุดขึ้นก่อน)
